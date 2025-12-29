@@ -225,7 +225,7 @@
             inset: 0;
             background: rgba(13, 19, 33, 0.5);
             backdrop-filter: blur(4px);
-            z-index: 1000;
+            z-index: 1200;
             align-items: center;
             justify-content: center;
             animation: fadeIn 0.2s ease;
@@ -593,6 +593,11 @@
             font-weight: 700;
             color: var(--ink);
             margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
         }
 
         .winner-names {
@@ -637,6 +642,16 @@
         .nominee-title {
             font-weight: 600;
             color: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .title-text {
+            flex: 1;
+            text-align: left;
         }
 
         .nominee-names {
@@ -791,6 +806,12 @@
             font-size: 0.9em;
         }
 
+        .modal-table th.watched-header,
+        .modal-table td.watched-cell {
+            text-align: center;
+            width: 88px;
+        }
+
         .modal-table th {
             position: sticky;
             top: 0;
@@ -832,6 +853,34 @@
 
         .movie-link:hover {
             color: var(--plum);
+        }
+
+        .watched-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(13, 19, 33, 0.2);
+            color: var(--ink-soft);
+            font-size: 0.65em;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .watched-badge::before {
+            content: "\25CB";
+        }
+
+        .watched-badge.is-watched {
+            border-color: var(--gold-deep);
+            color: var(--gold-deep);
+            background: rgba(242, 196, 104, 0.2);
+        }
+
+        .watched-badge.is-watched::before {
+            content: "\2713";
         }
 
         .detail-modal {
@@ -880,6 +929,90 @@
             font-family: var(--title-font);
             font-size: 1.4em;
             margin-bottom: 6px;
+        }
+
+        .detail-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .watched-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            border: 1px solid rgba(13, 19, 33, 0.2);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--ink-soft);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .watched-toggle:hover {
+            border-color: var(--gold-deep);
+            color: var(--gold-deep);
+        }
+
+        .watched-toggle:focus-visible {
+            outline: 2px solid var(--gold-deep);
+            outline-offset: 2px;
+        }
+
+        .watched-toggle.is-watched {
+            background: rgba(242, 196, 104, 0.2);
+            border-color: var(--gold-deep);
+            color: var(--gold-deep);
+        }
+
+        .watched-toggle.is-locked {
+            opacity: 0.6;
+        }
+
+        .watched-toggle::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            background: rgba(13, 19, 33, 0.92);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.78em;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(-4px);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            z-index: 3;
+        }
+
+        .watched-toggle:hover::after,
+        .watched-toggle:focus-visible::after {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .watched-icon {
+            font-size: 1.05em;
+            line-height: 1;
+        }
+
+        .watched-icon--on {
+            display: none;
+        }
+
+        .watched-toggle.is-watched .watched-icon--on {
+            display: inline;
+        }
+
+        .watched-toggle.is-watched .watched-icon--off {
+            display: none;
         }
 
         .detail-meta {
@@ -1136,12 +1269,18 @@
         </div>
     </div>
 
-    <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
+        <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
         <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="movieDetailTitle">
             <button class="detail-close" type="button" aria-label="Close">×</button>
             <img id="movieDetailPoster" class="detail-poster" alt="">
             <div>
-                <div id="movieDetailTitle" class="detail-title"></div>
+                <div class="detail-title-row">
+                    <div id="movieDetailTitle" class="detail-title"></div>
+                    <button id="watchedToggle" class="watched-toggle" type="button" aria-pressed="false" aria-label="Sign in to track watched" data-tooltip="Sign in to track watched">
+                        <span class="watched-icon watched-icon--on" aria-hidden="true">&#10003;</span>
+                        <span class="watched-icon watched-icon--off" aria-hidden="true">&#9675;</span>
+                    </button>
+                </div>
                 <div id="movieDetailMeta" class="detail-meta"></div>
                 <div id="movieDetailOverview" class="detail-overview"></div>
                 <div id="movieDetailCategories" class="detail-categories"></div>
@@ -1365,7 +1504,8 @@
                             <div class="winner-content">
                                 <div class="winner-label">Winner</div>
                                 <button class="winner-title movie-link" type="button" data-movie-id="${item.winner.id || ''}">
-                                    ${item.winner.title}
+                                    <span class="title-text">${item.winner.title}</span>
+                                    <span class="watched-badge" data-movie-id="${item.winner.id || ''}" aria-hidden="true"></span>
                                 </button>
                                 <div class="winner-names">${item.winner.names.join(', ')}</div>
                             </div>
@@ -1395,7 +1535,8 @@
                             html += `
                                 <div class="nominee-item">
                                     <button class="nominee-title movie-link" type="button" data-movie-id="${nominee.id || ''}">
-                                        ${nominee.title}
+                                        <span class="title-text">${nominee.title}</span>
+                                        <span class="watched-badge" data-movie-id="${nominee.id || ''}" aria-hidden="true"></span>
                                     </button>
                                     <div class="nominee-names">${nominee.names.join(', ')}</div>
                                 </div>
@@ -1411,6 +1552,9 @@
 
             container.innerHTML = html || '<div class="no-results">No results match your search</div>';
             setupLazyPosters();
+            if (window.updateWatchedBadges) {
+                window.updateWatchedBadges();
+            }
             latestMovieStats = Object.values(movieStats)
                 .sort((a, b) => a.title.localeCompare(b.title) || parseInt(a.year) - parseInt(b.year));
             const uniqueCount = latestMovieStats.length;
@@ -1474,6 +1618,9 @@
         function openMovieDetail(movieId) {
             const movie = moviesData[movieId];
             if (!movie) return;
+            if (window.setCurrentMovieId) {
+                window.setCurrentMovieId(movieId);
+            }
 
             const poster = document.getElementById('movieDetailPoster');
             if (movie.poster_path) {
@@ -1536,6 +1683,9 @@
             modal.classList.remove('is-open');
             modal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('modal-open');
+            if (window.setCurrentMovieId) {
+                window.setCurrentMovieId(null);
+            }
         }
 
         function renderMoviesTable(tableHost) {
@@ -1556,6 +1706,11 @@
                     const aYear = a.year ? parseInt(a.year, 10) : 0;
                     const bYear = b.year ? parseInt(b.year, 10) : 0;
                     return (aYear - bYear) * direction;
+                }
+                if (tableSort.key === 'watched') {
+                    const aWatched = window.isMovieWatched ? (window.isMovieWatched(a.id) ? 1 : 0) : 0;
+                    const bWatched = window.isMovieWatched ? (window.isMovieWatched(b.id) ? 1 : 0) : 0;
+                    return (aWatched - bWatched) * direction;
                 }
                 if (tableSort.key === 'score') {
                     const aScore = getScore(a) ?? -1;
@@ -1585,6 +1740,7 @@
                     <thead>
                         <tr>
                             <th>${header('Title', 'title')}</th>
+                            <th class="watched-header">${header('Watched', 'watched')}</th>
                             <th>${header('Year', 'year')}</th>
                             <th>${header('Wins', 'wins')}</th>
                             <th>${header('Nominees', 'nominees')}</th>
@@ -1609,6 +1765,9 @@
                                                 ${titleLabel}
                                             </button>
                                         </td>
+                                        <td class="watched-cell">
+                                            <span class="watched-badge" data-movie-id="${movie.id || ''}" aria-hidden="true"></span>
+                                        </td>
                                         <td>${yearLabel}</td>
                                         <td>${movie.wins}</td>
                                         <td>${movie.nominees}</td>
@@ -1620,6 +1779,10 @@
                     </tbody>
                 </table>
             `;
+
+            if (window.updateWatchedBadges) {
+                window.updateWatchedBadges();
+            }
 
             tableHost.querySelectorAll('.sort-button').forEach(button => {
                 button.addEventListener('click', () => {
@@ -1688,6 +1851,14 @@
     signOut, 
     onAuthStateChanged 
   } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    deleteDoc
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
   // Your web app's Firebase configuration
   const firebaseConfig = {
@@ -1702,6 +1873,7 @@
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
 
   // DOM elements
@@ -1716,6 +1888,65 @@
   const authModal = document.getElementById('authModal');
   const closeAuthModal = document.getElementById('closeAuthModal');
   const googleSignInButton = document.getElementById('googleSignInButton');
+  const watchedToggle = document.getElementById('watchedToggle');
+
+  let currentUser = null;
+  let watchedIds = new Set();
+  let currentMovieId = null;
+
+  function updateWatchedToggle() {
+    if (!watchedToggle) return;
+    const isAuthed = Boolean(currentUser);
+    const isWatched = isAuthed && currentMovieId && watchedIds.has(currentMovieId);
+    const tooltipText = !isAuthed ? 'Sign in to track watched' : (isWatched ? 'Unmark watched' : 'Mark as watched');
+    watchedToggle.classList.toggle('is-watched', Boolean(isWatched));
+    watchedToggle.classList.toggle('is-locked', !isAuthed);
+    watchedToggle.setAttribute('aria-pressed', isWatched ? 'true' : 'false');
+    watchedToggle.setAttribute('aria-label', tooltipText);
+    watchedToggle.setAttribute('data-tooltip', tooltipText);
+    updateWatchedBadges();
+  }
+
+  function updateWatchedBadges() {
+    const badges = document.querySelectorAll('.watched-badge[data-movie-id]');
+    badges.forEach((badge) => {
+      const movieId = badge.dataset.movieId;
+      const isWatched = Boolean(currentUser) && movieId && watchedIds.has(movieId);
+      badge.classList.toggle('is-watched', isWatched);
+      badge.setAttribute('data-state', isWatched ? 'watched' : 'unwatched');
+    });
+  }
+
+  function isMovieWatched(movieId) {
+    return Boolean(currentUser) && Boolean(movieId) && watchedIds.has(movieId);
+  }
+
+  function setCurrentMovieId(movieId) {
+    currentMovieId = movieId;
+    updateWatchedToggle();
+  }
+
+  window.setCurrentMovieId = setCurrentMovieId;
+  window.updateWatchedBadges = updateWatchedBadges;
+  window.isMovieWatched = isMovieWatched;
+
+  async function loadWatchedIds(user) {
+    watchedIds = new Set();
+    if (!user) {
+      updateWatchedToggle();
+      return;
+    }
+    try {
+      const snapshot = await getDocs(collection(db, 'users', user.uid, 'watched'));
+      snapshot.forEach((docSnap) => {
+        watchedIds.add(docSnap.id);
+      });
+    } catch (error) {
+      console.error('Watched load error:', error);
+    }
+    updateWatchedToggle();
+    updateWatchedBadges();
+  }
 
   // Open sign-in modal
   signInButton.addEventListener('click', () => {
@@ -1759,6 +1990,30 @@
     }
   });
 
+  watchedToggle.addEventListener('click', async () => {
+    if (!currentMovieId) return;
+    if (!currentUser) {
+      authModal.classList.add('show');
+      return;
+    }
+    const docRef = doc(db, 'users', currentUser.uid, 'watched', currentMovieId);
+    const isWatched = watchedIds.has(currentMovieId);
+    try {
+      if (isWatched) {
+        await deleteDoc(docRef);
+        watchedIds.delete(currentMovieId);
+      } else {
+        await setDoc(docRef, { watched: true }, { merge: true });
+        watchedIds.add(currentMovieId);
+      }
+      updateWatchedToggle();
+      updateWatchedBadges();
+    } catch (error) {
+      console.error('Watched toggle error:', error);
+      alert('Could not update watched status. Please try again.');
+    }
+  });
+
   // Toggle user dropdown menu
   userMenuButton.addEventListener('click', () => {
     userDropdown.classList.toggle('show');
@@ -1776,6 +2031,8 @@
     if (user) {
       // User is signed in
       console.log('User is authenticated:', user.displayName);
+      currentUser = user;
+      loadWatchedIds(user);
       signInButton.style.display = 'none';
       userMenu.style.display = 'block';
       userName.textContent = user.displayName || 'User';
@@ -1784,6 +2041,9 @@
     } else {
       // User is signed out
       console.log('User is not authenticated');
+      currentUser = null;
+      watchedIds = new Set();
+      updateWatchedToggle();
       signInButton.style.display = 'flex';
       userMenu.style.display = 'none';
     }
