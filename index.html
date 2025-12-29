@@ -862,25 +862,28 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            border: 1px solid rgba(13, 19, 33, 0.2);
-            color: var(--ink-soft);
+            border: 1px solid rgba(13, 19, 33, 0.35);
+            color: rgba(13, 19, 33, 0.5);
             font-size: 0.65em;
             margin-left: 8px;
             flex-shrink: 0;
+            background: rgba(13, 19, 33, 0.02);
         }
 
         .watched-badge::before {
-            content: "\25CB";
+            content: "\2713";
+            opacity: 0.45;
         }
 
         .watched-badge.is-watched {
             border-color: var(--gold-deep);
-            color: var(--gold-deep);
-            background: rgba(242, 196, 104, 0.2);
+            color: #8a5a11;
+            background: rgba(242, 196, 104, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(204, 155, 62, 0.45);
         }
 
         .watched-badge.is-watched::before {
-            content: "\2713";
+            opacity: 1;
         }
 
         .detail-modal {
@@ -928,7 +931,7 @@
         .detail-title {
             font-family: var(--title-font);
             font-size: 1.4em;
-            margin-bottom: 6px;
+            margin-bottom: 0;
         }
 
         .detail-title-row {
@@ -939,16 +942,19 @@
         }
 
         .watched-toggle {
-            width: 36px;
-            height: 36px;
+            width: 74px;
+            height: 54px;
+            padding: 6px;
             border-radius: 999px;
-            border: 1px solid rgba(13, 19, 33, 0.2);
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink-soft);
+            border: 1px solid rgba(13, 19, 33, 0.35);
+            background: rgba(13, 19, 33, 0.02);
+            color: rgba(13, 19, 33, 0.5);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
+            gap: 4px;
             transition: all 0.2s ease;
             position: relative;
             z-index: 2;
@@ -965,9 +971,10 @@
         }
 
         .watched-toggle.is-watched {
-            background: rgba(242, 196, 104, 0.2);
+            background: rgba(242, 196, 104, 0.4);
             border-color: var(--gold-deep);
-            color: var(--gold-deep);
+            color: #8a5a11;
+            box-shadow: inset 0 0 0 1px rgba(204, 155, 62, 0.45);
         }
 
         .watched-toggle.is-locked {
@@ -1003,6 +1010,18 @@
             line-height: 1;
         }
 
+        .watched-icon--off {
+            opacity: 0.45;
+        }
+
+        .watched-label {
+            font-size: 0.58em;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: inherit;
+            line-height: 1;
+        }
+
         .watched-icon--on {
             display: none;
         }
@@ -1018,6 +1037,7 @@
         .detail-meta {
             font-size: 0.9em;
             color: var(--ink-soft);
+            font-style: italic;
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
@@ -1121,6 +1141,37 @@
             }
         }
 
+        @media (max-width: 640px) {
+            #userMenuButton {
+                padding: 8px 10px;
+            }
+
+            #userName {
+                display: none;
+            }
+
+            .detail-card {
+                grid-template-columns: 1fr;
+                padding: 18px;
+                max-height: 85vh;
+                overflow-x: hidden;
+                justify-items: center;
+            }
+
+            .detail-card > div {
+                width: 100%;
+            }
+
+            .detail-poster {
+                width: min(260px, 100%);
+                margin: 0 auto;
+            }
+
+            .detail-title-row {
+                align-items: flex-start;
+            }
+        }
+
         @keyframes rise {
             from {
                 opacity: 0;
@@ -1175,6 +1226,7 @@
                     <span id="userName"></span>
                 </button>
                 <div id="userDropdown" class="user-dropdown">
+                    <div class="dropdown-item" style="font-weight: 600;" id="userDropdownName"></div>
                     <div class="dropdown-item" style="font-weight: 600;" id="userEmail"></div>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" id="signOutButton">Sign out</button>
@@ -1278,7 +1330,8 @@
                     <div id="movieDetailTitle" class="detail-title"></div>
                     <button id="watchedToggle" class="watched-toggle" type="button" aria-pressed="false" aria-label="Sign in to track watched" data-tooltip="Sign in to track watched">
                         <span class="watched-icon watched-icon--on" aria-hidden="true">&#10003;</span>
-                        <span class="watched-icon watched-icon--off" aria-hidden="true">&#9675;</span>
+                        <span class="watched-icon watched-icon--off" aria-hidden="true">&#10003;</span>
+                        <span class="watched-label" id="watchedLabel">Not watched</span>
                     </button>
                 </div>
                 <div id="movieDetailMeta" class="detail-meta"></div>
@@ -1885,9 +1938,11 @@
   const userName = document.getElementById('userName');
   const userEmail = document.getElementById('userEmail');
   const userAvatar = document.getElementById('userAvatar');
+  const userDropdownName = document.getElementById('userDropdownName');
   const authModal = document.getElementById('authModal');
   const closeAuthModal = document.getElementById('closeAuthModal');
   const googleSignInButton = document.getElementById('googleSignInButton');
+  const watchedLabel = document.getElementById('watchedLabel');
   const watchedToggle = document.getElementById('watchedToggle');
 
   let currentUser = null;
@@ -1899,11 +1954,15 @@
     const isAuthed = Boolean(currentUser);
     const isWatched = isAuthed && currentMovieId && watchedIds.has(currentMovieId);
     const tooltipText = !isAuthed ? 'Sign in to track watched' : (isWatched ? 'Unmark watched' : 'Mark as watched');
+    const labelText = isWatched ? 'Watched' : 'Not watched';
     watchedToggle.classList.toggle('is-watched', Boolean(isWatched));
     watchedToggle.classList.toggle('is-locked', !isAuthed);
     watchedToggle.setAttribute('aria-pressed', isWatched ? 'true' : 'false');
     watchedToggle.setAttribute('aria-label', tooltipText);
     watchedToggle.setAttribute('data-tooltip', tooltipText);
+    if (watchedLabel) {
+      watchedLabel.textContent = labelText;
+    }
     updateWatchedBadges();
   }
 
@@ -2036,6 +2095,7 @@
       signInButton.style.display = 'none';
       userMenu.style.display = 'block';
       userName.textContent = user.displayName || 'User';
+      userDropdownName.textContent = user.displayName || 'User';
       userEmail.textContent = user.email;
       userAvatar.src = user.photoURL || 'https://via.placeholder.com/32';
     } else {
