@@ -511,6 +511,34 @@
             color: var(--ink-soft);
         }
 
+        .count-pill--combo {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+            min-width: 140px;
+        }
+
+        .count-pill--combo .count-pill-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 4px 16px;
+            align-items: center;
+            text-align: center;
+        }
+
+        .count-pill--combo .count-pill-value {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .count-pill--combo .count-pill-label {
+            font-size: 0.68em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
         .count-link {
             background: none;
             border: none;
@@ -1194,6 +1222,33 @@
             .modal-table {
                 margin-left: 0;
             }
+
+            #moviesModal .count-pill {
+                padding: 3px 6px;
+            }
+
+            #moviesModal .count-pill--stacked {
+                min-width: 44px;
+            }
+
+            #moviesModal .count-pill--combo {
+                min-width: 108px;
+            }
+
+            #moviesModal .count-pill--combo .count-pill-grid {
+                gap: 2px 8px;
+            }
+
+            #moviesModal .count-pill--combo .count-pill-value,
+            #moviesModal .count-pill--stacked .count-pill-value {
+                font-size: 0.88em;
+            }
+
+            #moviesModal .count-pill--combo .count-pill-label,
+            #moviesModal .count-pill--stacked .count-pill-label {
+                font-size: 0.58em;
+                letter-spacing: 0.06em;
+            }
         }
 
         @media (max-width: 640px) {
@@ -1319,7 +1374,7 @@
     <div class="container">
         <header class="hero">
             <h1>OscarEight</h1>
-            <p>Explore Winners and Nominees in the 8 major categories since 1977</p>
+            <p>Explore winners and nominees in the 8 major categories since 1977</p>
         </header>
 
         <div class="controls">
@@ -1619,13 +1674,29 @@
             const modalCounts = document.getElementById('moviesModalCounts');
             const uniqueCount = latestMovieStats.length;
             const watchedCount = getWatchedCountForStats();
-            const moviesLabel = watchedCount === null
-                ? `${uniqueCount} movies`
-                : `${watchedCount} / ${uniqueCount} Movies`;
+            const moviesCountHtml = watchedCount === null
+                ? `
+                    <span class="count-pill count-pill--stacked">
+                        <span class="count-pill-value">
+                            <button id="moviesCountButton" class="count-link" type="button">${uniqueCount}</button>
+                        </span>
+                        <span class="count-pill-label">Movies</span>
+                    </span>
+                `
+                : `
+                    <span class="count-pill count-pill--combo">
+                        <span class="count-pill-grid">
+                            <span class="count-pill-value">${watchedCount}</span>
+                            <span class="count-pill-value">
+                                <button id="moviesCountButton" class="count-link" type="button">${uniqueCount}</button>
+                            </span>
+                            <span class="count-pill-label">Watched</span>
+                            <span class="count-pill-label">Movies</span>
+                        </span>
+                    </span>
+                `;
 
-            resultsCount.innerHTML = `
-                <span class="count-pill"><button id="moviesCountButton" class="count-link" type="button">${moviesLabel}</button></span>
-            `.trim();
+            resultsCount.innerHTML = moviesCountHtml.trim();
 
             if (modalCounts) {
                 const globalStats = getGlobalMovieStats();
@@ -1641,19 +1712,33 @@
                     totalWins += entry.wins || 0;
                     totalNominations += entry.nominations || 0;
                 });
+                const moviesPill = watchedCount === null
+                    ? `
+                        <span class="count-pill count-pill--stacked">
+                            <span class="count-pill-value">${uniqueCount}</span>
+                            <span class="count-pill-label">Movies</span>
+                        </span>
+                    `
+                    : `
+                        <span class="count-pill count-pill--combo">
+                            <span class="count-pill-grid">
+                                <span class="count-pill-value">${watchedCount}</span>
+                                <span class="count-pill-value">${uniqueCount}</span>
+                                <span class="count-pill-label">Watched</span>
+                                <span class="count-pill-label">Movies</span>
+                            </span>
+                        </span>
+                    `;
                 modalCounts.innerHTML = `
-                    <span class="count-pill count-pill--stacked">
-                        <span class="count-pill-value">${totalWins}</span>
-                        <span class="count-pill-label">Oscars</span>
+                    <span class="count-pill count-pill--combo">
+                        <span class="count-pill-grid">
+                            <span class="count-pill-value">${totalWins}</span>
+                            <span class="count-pill-value">${totalNominations}</span>
+                            <span class="count-pill-label">Oscars</span>
+                            <span class="count-pill-label">Nominees</span>
+                        </span>
                     </span>
-                    <span class="count-pill count-pill--stacked">
-                        <span class="count-pill-value">${totalNominations}</span>
-                        <span class="count-pill-label">Nominees</span>
-                    </span>
-                    <span class="count-pill count-pill--stacked">
-                        <span class="count-pill-value">${uniqueCount}</span>
-                        <span class="count-pill-label">Movies</span>
-                    </span>
+                    ${moviesPill}
                 `.trim();
             }
         }
