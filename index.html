@@ -365,11 +365,11 @@
             --poster-gap: 12px;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 20px;
-            padding: 12px 14px;
+            padding: 28px 14px 16px;
             margin-bottom: 18px;
             box-shadow: var(--shadow);
             border: var(--card-border);
-            overflow: hidden;
+            overflow: visible;
             animation: rise 0.7s ease-out;
         }
 
@@ -381,6 +381,8 @@
             display: flex;
             gap: var(--poster-gap);
             overflow-x: hidden;
+            overflow-y: visible;
+            padding-top: 8px;
             padding-bottom: 4px;
             scroll-snap-type: x proximity;
         }
@@ -406,8 +408,30 @@
             box-shadow: 0 10px 22px rgba(13, 19, 33, 0.18);
             scroll-snap-align: start;
             flex-shrink: 0;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: posterReveal 0.6s ease forwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+            position: relative;
         }
 
+        .poster-strip-image.is-highlighted {
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 0 18px 38px rgba(13, 19, 33, 0.28), 0 0 0 3px rgba(242, 196, 104, 0.55);
+            filter: drop-shadow(0 0 14px rgba(242, 196, 104, 0.6)) saturate(1.15);
+            z-index: 2;
+        }
+
+        @keyframes posterReveal {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         .expandable-toggle {
             display: flex;
             align-items: center;
@@ -1605,6 +1629,11 @@
 
         const debugPosterStrip = true;
         let posterStripReady = false;
+        const posterStripHighlightMs = 2000;
+        const posterStripShuffleDelayMs = 2000;
+        let posterStripHighlightTimer = null;
+        let posterStripShuffleTimer = null;
+        let posterStripHighlightIndex = 0;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -1953,7 +1982,6 @@
             };
 
             data.forEach(item => {
-                if (posters.length >= maxPosters) return;
                 const winnerMatches = matchesSearch(item.winner);
                 const filteredNominees = item.nominees.filter(nominee => matchesSearch(nominee));
                 const showNominees = state.showNominees && (filteredNominees.length > 0 || !state.searchQuery);
@@ -1965,11 +1993,13 @@
 
                 if (showNominees) {
                     filteredNominees.forEach(nominee => {
-                        if (posters.length >= maxPosters) return;
                         maybeAdd(nominee);
                     });
                 }
             });
+
+            shuffleArray(posters);
+            const visiblePosters = posters.slice(0, maxPosters);
 
             if (posters.length === 0) {
                 section.classList.add('is-empty');
@@ -1980,21 +2010,68 @@
                 return;
             }
 
-            track.innerHTML = posters
-                .map(poster => `<img class="poster-strip-image" data-src="${poster.url}" alt="${poster.title}">`)
+            track.innerHTML = visiblePosters
+                .map((poster, index) => {
+                    const delay = Math.min(index * 60, 420);
+                    return `<img class="poster-strip-image" data-src="${poster.url}" alt="${poster.title}" style="animation-delay:${delay}ms">`;
+                })
                 .join('');
             section.classList.remove('is-empty');
-            section.classList.toggle('is-centered', posters.length < maxPosters);
+            section.classList.toggle('is-centered', visiblePosters.length < maxPosters);
+            startPosterHighlightCycle();
             if (debugPosterStrip) {
                 console.log('[poster-strip] render', {
                     maxPosters,
-                    rendered: posters.length,
+                    rendered: visiblePosters.length,
                     sectionWidth: section.getBoundingClientRect().width,
                     trackWidth: track.clientWidth,
                     padLeft: parseFloat(getComputedStyle(section).paddingLeft),
                     padRight: parseFloat(getComputedStyle(section).paddingRight)
                 });
             }
+        }
+
+        function shuffleArray(items) {
+            for (let i = items.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+        }
+
+        function startPosterHighlightCycle() {
+            if (!posterStripReady) return;
+            if (posterStripHighlightTimer) {
+                clearInterval(posterStripHighlightTimer);
+                posterStripHighlightTimer = null;
+            }
+            if (posterStripShuffleTimer) {
+                clearTimeout(posterStripShuffleTimer);
+                posterStripShuffleTimer = null;
+            }
+
+            const posters = Array.from(document.querySelectorAll('.poster-strip-image'));
+            if (posters.length === 0) return;
+
+            posters.forEach(poster => poster.classList.remove('is-highlighted'));
+            posterStripHighlightIndex = 0;
+            posters[posterStripHighlightIndex].classList.add('is-highlighted');
+
+            posterStripHighlightTimer = window.setInterval(() => {
+                posters[posterStripHighlightIndex].classList.remove('is-highlighted');
+                posterStripHighlightIndex += 1;
+
+                if (posterStripHighlightIndex >= posters.length) {
+                    clearInterval(posterStripHighlightTimer);
+                    posterStripHighlightTimer = null;
+                    posterStripShuffleTimer = window.setTimeout(() => {
+                        renderPosterStrip();
+                        setupLazyPosters();
+                    }, posterStripShuffleDelayMs);
+                    return;
+                }
+
+                posters[posterStripHighlightIndex].classList.add('is-highlighted');
+            }, posterStripHighlightMs);
         }
 
         function getPosterStripCapacity() {
