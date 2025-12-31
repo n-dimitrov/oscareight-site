@@ -347,18 +347,83 @@
             background: rgba(13, 19, 33, 0.1);
         }
 
-        .controls {
+        .filters {
             background: rgba(255, 255, 255, 0.92);
             border-radius: 20px;
-            padding: 26px;
+            padding: 20px 22px;
             margin-bottom: 26px;
             box-shadow: var(--shadow);
             border: var(--card-border);
             display: grid;
+            gap: 18px;
+            animation: rise 0.7s ease-out;
+        }
+
+        .expandable-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(13, 19, 33, 0.04);
+            border-radius: 14px;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            padding: 12px 16px;
+            font-family: var(--body-font);
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .filters .expandable-toggle {
+            width: 100%;
+        }
+
+        .movies-toggle {
+            width: 100%;
+            gap: 16px;
+        }
+
+        .expandable-toggle .count-chips {
+            margin-left: auto;
+        }
+
+        .expandable-toggle:hover {
+            border-color: rgba(91, 59, 84, 0.4);
+            box-shadow: 0 6px 14px rgba(13, 19, 33, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .expandable-toggle:focus-visible {
+            outline: none;
+            border-color: var(--gold-deep);
+            box-shadow: 0 0 0 3px rgba(242, 196, 104, 0.25);
+        }
+
+        .expandable-toggle-icon {
+            width: 16px;
+            height: 10px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M1 1l7 7 7-7' fill='none' stroke='%235b3b54' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.2s ease;
+        }
+
+        .expandable-toggle[aria-expanded="true"] .expandable-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .controls {
+            display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 20px;
             align-items: end;
-            animation: rise 0.7s ease-out;
+        }
+
+        .controls.is-collapsed {
+            display: none;
         }
 
         .control-group,
@@ -465,10 +530,12 @@
             margin-bottom: 22px;
         }
 
-        .card h2 {
-            font-family: var(--title-font);
-            color: var(--ink);
-            font-size: 1.7em;
+        .expandable-toggle[aria-expanded="false"] .expandable-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        #resultsContainer.is-collapsed {
+            display: none;
         }
 
         .count-chips {
@@ -1377,7 +1444,12 @@
             <p>Explore winners and nominees in the 8 major categories since 1977</p>
         </header>
 
-        <div class="controls">
+        <div class="filters">
+            <button class="expandable-toggle" id="filtersToggle" type="button" aria-expanded="false" aria-controls="filtersControls">
+                Filters
+                <span class="expandable-toggle-icon" aria-hidden="true"></span>
+            </button>
+            <div class="controls is-collapsed" id="filtersControls">
             <div class="control-group">
                 <label for="yearSelect" class="field-label">Select Year</label>
                 <select id="yearSelect">
@@ -1398,6 +1470,7 @@
                 <input type="checkbox" id="toggleNominees" checked>
                 <label for="toggleNominees">Show Nominees</label>
             </div>
+            </div>
         </div>
 
         <div id="resultsInfo"></div>
@@ -1405,10 +1478,13 @@
         <div class="content">
             <div class="card">
                 <div class="card-header">
-                    <h2>Movies</h2>
-                    <span id="resultsCount" class="count-chips">
-                        <span class="count-pill"><button id="moviesCountButton" class="count-link" type="button">0 movies</button></span>
-                    </span>
+                    <div class="expandable-toggle movies-toggle" id="moviesToggle" role="button" tabindex="0" aria-expanded="true" aria-controls="resultsContainer">
+                        Movies
+                        <span id="resultsCount" class="count-chips">
+                            <span class="count-pill"><button id="moviesCountButton" class="count-link" type="button">0 movies</button></span>
+                        </span>
+                        <span class="expandable-toggle-icon" aria-hidden="true"></span>
+                    </div>
                 </div>
                 <div id="resultsContainer"></div>
             </div>
@@ -1469,7 +1545,9 @@
             selectedYear: null,
             selectedCategory: null,
             searchQuery: '',
-            showNominees: false
+            showNominees: false,
+            filtersExpanded: false,
+            moviesExpanded: true
         };
 
         let latestMovieStats = [];
@@ -1536,6 +1614,8 @@
             populateYearSelect();
             populateCategorySelect();
             setupEventListeners();
+            setFiltersExpanded(state.filtersExpanded);
+            setMoviesExpanded(state.moviesExpanded);
             document.getElementById('toggleNominees').checked = state.showNominees;
             render();
         }
@@ -1562,6 +1642,24 @@
         }
 
         function setupEventListeners() {
+            document.getElementById('filtersToggle').addEventListener('click', () => {
+                state.filtersExpanded = !state.filtersExpanded;
+                setFiltersExpanded(state.filtersExpanded);
+            });
+
+            document.getElementById('moviesToggle').addEventListener('click', () => {
+                state.moviesExpanded = !state.moviesExpanded;
+                setMoviesExpanded(state.moviesExpanded);
+            });
+
+            document.getElementById('moviesToggle').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    state.moviesExpanded = !state.moviesExpanded;
+                    setMoviesExpanded(state.moviesExpanded);
+                }
+            });
+
             document.getElementById('yearSelect').addEventListener('change', (e) => {
                 state.selectedYear = e.target.value || null;
                 render();
@@ -1584,6 +1682,7 @@
 
             document.getElementById('resultsCount').addEventListener('click', (e) => {
                 if (e.target && e.target.id === 'moviesCountButton') {
+                    e.stopPropagation();
                     openMoviesModal();
                 }
             });
@@ -1615,6 +1714,20 @@
                     closeMovieDetail();
                 }
             });
+        }
+
+        function setFiltersExpanded(isExpanded) {
+            const toggle = document.getElementById('filtersToggle');
+            const controls = document.getElementById('filtersControls');
+            toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+            controls.classList.toggle('is-collapsed', !isExpanded);
+        }
+
+        function setMoviesExpanded(isExpanded) {
+            const toggle = document.getElementById('moviesToggle');
+            const container = document.getElementById('resultsContainer');
+            toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+            container.classList.toggle('is-collapsed', !isExpanded);
         }
 
         function getDisplayData() {
