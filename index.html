@@ -387,6 +387,18 @@
             scroll-snap-type: x proximity;
         }
 
+        .poster-strip-button {
+            display: inline-flex;
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .poster-strip-button:focus-visible {
+            outline: none;
+        }
+
         .poster-strip-info {
             margin-top: 10px;
             color: var(--ink-soft);
@@ -1683,6 +1695,7 @@
         let posterStripHighlightTimer = null;
         let posterStripShuffleTimer = null;
         let posterStripHighlightIndex = 0;
+        let posterStripPaused = false;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -1796,6 +1809,24 @@
                     e.preventDefault();
                     state.moviesExpanded = !state.moviesExpanded;
                     setMoviesExpanded(state.moviesExpanded);
+                }
+            });
+
+            const posterStripSection = document.getElementById('posterStripSection');
+            const posterStripTrack = document.getElementById('posterStrip');
+            posterStripSection.addEventListener('mouseenter', pausePosterStrip);
+            posterStripSection.addEventListener('mouseleave', resumePosterStrip);
+            posterStripSection.addEventListener('focusin', pausePosterStrip);
+            posterStripSection.addEventListener('focusout', (e) => {
+                if (!posterStripSection.contains(e.relatedTarget)) {
+                    resumePosterStrip();
+                }
+            });
+            posterStripTrack.addEventListener('click', (e) => {
+                const button = e.target.closest('.poster-strip-button');
+                if (button && button.dataset.movieId) {
+                    pausePosterStrip();
+                    highlightPosterById(button.dataset.movieId);
                 }
             });
 
@@ -2063,13 +2094,19 @@
             track.innerHTML = visiblePosters
                 .map((poster, index) => {
                     const delay = Math.min(index * 60, 420);
-                    return `<img class="poster-strip-image" data-movie-id="${poster.id}" data-src="${poster.url}" alt="${poster.title}" style="animation-delay:${delay}ms">`;
+                    return `
+                        <button class="poster-strip-button" type="button" data-movie-id="${poster.id}" aria-label="Highlight ${poster.title}">
+                            <img class="poster-strip-image" data-movie-id="${poster.id}" data-src="${poster.url}" alt="${poster.title}" style="animation-delay:${delay}ms">
+                        </button>
+                    `;
                 })
                 .join('');
             section.classList.remove('is-empty');
             section.classList.toggle('is-centered', visiblePosters.length < maxPosters);
             updatePosterStripInfo(visiblePosters[0] ? visiblePosters[0].id : null);
-            startPosterHighlightCycle();
+            if (!posterStripPaused) {
+                startPosterHighlightCycle();
+            }
             if (debugPosterStrip) {
                 console.log('[poster-strip] render', {
                     maxPosters,
@@ -2125,7 +2162,7 @@
             `.trim();
         }
 
-        function startPosterHighlightCycle() {
+        function startPosterHighlightCycle(resume = false) {
             if (!posterStripReady) return;
             if (posterStripHighlightTimer) {
                 clearInterval(posterStripHighlightTimer);
@@ -2140,7 +2177,11 @@
             if (posters.length === 0) return;
 
             posters.forEach(poster => poster.classList.remove('is-highlighted'));
-            posterStripHighlightIndex = 0;
+            if (!resume) {
+                posterStripHighlightIndex = 0;
+            } else if (posterStripHighlightIndex >= posters.length) {
+                posterStripHighlightIndex = 0;
+            }
             posters[posterStripHighlightIndex].classList.add('is-highlighted');
             updatePosterStripInfo(posters[posterStripHighlightIndex].dataset.movieId);
 
@@ -2151,6 +2192,7 @@
                 if (posterStripHighlightIndex >= posters.length) {
                     clearInterval(posterStripHighlightTimer);
                     posterStripHighlightTimer = null;
+                    if (posterStripPaused) return;
                     posterStripShuffleTimer = window.setTimeout(() => {
                         renderPosterStrip();
                         setupLazyPosters();
@@ -2161,6 +2203,35 @@
                 posters[posterStripHighlightIndex].classList.add('is-highlighted');
                 updatePosterStripInfo(posters[posterStripHighlightIndex].dataset.movieId);
             }, posterStripHighlightMs);
+        }
+
+        function pausePosterStrip() {
+            posterStripPaused = true;
+            if (posterStripHighlightTimer) {
+                clearInterval(posterStripHighlightTimer);
+                posterStripHighlightTimer = null;
+            }
+            if (posterStripShuffleTimer) {
+                clearTimeout(posterStripShuffleTimer);
+                posterStripShuffleTimer = null;
+            }
+        }
+
+        function resumePosterStrip() {
+            if (!posterStripPaused) return;
+            posterStripPaused = false;
+            startPosterHighlightCycle(true);
+        }
+
+        function highlightPosterById(movieId) {
+            const posters = Array.from(document.querySelectorAll('.poster-strip-image'));
+            if (posters.length === 0) return;
+            const index = posters.findIndex(poster => poster.dataset.movieId === movieId);
+            if (index === -1) return;
+            posters.forEach(poster => poster.classList.remove('is-highlighted'));
+            posterStripHighlightIndex = index;
+            posters[posterStripHighlightIndex].classList.add('is-highlighted');
+            updatePosterStripInfo(posters[posterStripHighlightIndex].dataset.movieId);
         }
 
         function getPosterStripCapacity() {
