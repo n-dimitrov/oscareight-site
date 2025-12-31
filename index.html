@@ -387,6 +387,54 @@
             scroll-snap-type: x proximity;
         }
 
+        .poster-strip-info {
+            margin-top: 10px;
+            color: var(--ink-soft);
+            text-align: center;
+            letter-spacing: 0.02em;
+            display: grid;
+            gap: 6px;
+            justify-items: center;
+        }
+
+        .poster-strip-info-title {
+            font-weight: 600;
+            font-size: 1em;
+            color: var(--ink);
+        }
+
+        .poster-strip-info-title.is-winner {
+            color: var(--gold-deep);
+        }
+
+        .poster-strip-info-star {
+            margin-left: 6px;
+            color: var(--ink-soft);
+            font-size: 0.95em;
+        }
+
+        .poster-strip-info-star.is-winner {
+            color: var(--gold-deep);
+        }
+
+        .poster-strip-info-chips {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .poster-strip-info-chip {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(13, 19, 33, 0.08);
+            color: var(--ink-soft);
+            font-size: 0.72em;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
         .poster-strip .poster-strip-track {
             justify-content: center;
         }
@@ -1519,6 +1567,7 @@
 
         <section class="poster-strip is-empty" id="posterStripSection">
             <div class="poster-strip-track" id="posterStrip"></div>
+            <div class="poster-strip-info" id="posterStripInfo" aria-live="polite"></div>
         </section>
 
         <div class="filters">
@@ -1629,7 +1678,7 @@
 
         const debugPosterStrip = true;
         let posterStripReady = false;
-        const posterStripHighlightMs = 2000;
+        const posterStripHighlightMs = 3000;
         const posterStripShuffleDelayMs = 2000;
         let posterStripHighlightTimer = null;
         let posterStripShuffleTimer = null;
@@ -2004,6 +2053,7 @@
             if (posters.length === 0) {
                 section.classList.add('is-empty');
                 track.innerHTML = '';
+                updatePosterStripInfo(null);
                 if (debugPosterStrip) {
                     console.log('[poster-strip] empty', { maxPosters, dataCount: data.length });
                 }
@@ -2013,11 +2063,12 @@
             track.innerHTML = visiblePosters
                 .map((poster, index) => {
                     const delay = Math.min(index * 60, 420);
-                    return `<img class="poster-strip-image" data-src="${poster.url}" alt="${poster.title}" style="animation-delay:${delay}ms">`;
+                    return `<img class="poster-strip-image" data-movie-id="${poster.id}" data-src="${poster.url}" alt="${poster.title}" style="animation-delay:${delay}ms">`;
                 })
                 .join('');
             section.classList.remove('is-empty');
             section.classList.toggle('is-centered', visiblePosters.length < maxPosters);
+            updatePosterStripInfo(visiblePosters[0] ? visiblePosters[0].id : null);
             startPosterHighlightCycle();
             if (debugPosterStrip) {
                 console.log('[poster-strip] render', {
@@ -2038,6 +2089,42 @@
             }
         }
 
+        function updatePosterStripInfo(movieId) {
+            const info = document.getElementById('posterStripInfo');
+            if (!info) return;
+            if (!movieId || !moviesData[movieId]) {
+                info.textContent = '';
+                return;
+            }
+            const movie = moviesData[movieId];
+            const stats = getGlobalMovieStats();
+            const entry = stats[`id:${movieId}`] || { wins: 0, nominations: 0 };
+            const title = movie.title || 'Unknown';
+            const year = movie.year || '—';
+            const displayData = getDisplayData();
+            const isBestPictureNominee = displayData.some(item => {
+                if (item.category !== 'Best Picture') return false;
+                if (item.winner && item.winner.id === movieId) return true;
+                return (item.nominees || []).some(nominee => nominee.id === movieId);
+            });
+            const isBestPictureWinner = displayData.some(item => {
+                if (item.category !== 'Best Picture') return false;
+                return item.winner && item.winner.id === movieId;
+            });
+            const isWinner = (entry.wins || 0) > 0;
+            const titleClass = isWinner ? 'poster-strip-info-title is-winner' : 'poster-strip-info-title';
+            const starClass = isBestPictureWinner ? 'poster-strip-info-star is-winner' : 'poster-strip-info-star';
+            const star = isBestPictureNominee ? `<span class="${starClass}">&#9733;</span>` : '';
+            info.innerHTML = `
+                <div class="${titleClass}">${title}${star}</div>
+                <div class="poster-strip-info-chips">
+                    <span class="poster-strip-info-chip">${year}</span>
+                    <span class="poster-strip-info-chip">Wins ${entry.wins || 0}</span>
+                    <span class="poster-strip-info-chip">Noms ${entry.nominations || 0}</span>
+                </div>
+            `.trim();
+        }
+
         function startPosterHighlightCycle() {
             if (!posterStripReady) return;
             if (posterStripHighlightTimer) {
@@ -2055,6 +2142,7 @@
             posters.forEach(poster => poster.classList.remove('is-highlighted'));
             posterStripHighlightIndex = 0;
             posters[posterStripHighlightIndex].classList.add('is-highlighted');
+            updatePosterStripInfo(posters[posterStripHighlightIndex].dataset.movieId);
 
             posterStripHighlightTimer = window.setInterval(() => {
                 posters[posterStripHighlightIndex].classList.remove('is-highlighted');
@@ -2071,6 +2159,7 @@
                 }
 
                 posters[posterStripHighlightIndex].classList.add('is-highlighted');
+                updatePosterStripInfo(posters[posterStripHighlightIndex].dataset.movieId);
             }, posterStripHighlightMs);
         }
 
