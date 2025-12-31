@@ -359,6 +359,55 @@
             animation: rise 0.7s ease-out;
         }
 
+        .poster-strip {
+            --poster-width: 64px;
+            --poster-height: 96px;
+            --poster-gap: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow);
+            border: var(--card-border);
+            overflow: hidden;
+            animation: rise 0.7s ease-out;
+        }
+
+        .poster-strip.is-empty {
+            display: none;
+        }
+
+        .poster-strip-track {
+            display: flex;
+            gap: var(--poster-gap);
+            overflow-x: hidden;
+            padding-bottom: 4px;
+            scroll-snap-type: x proximity;
+        }
+
+        .poster-strip .poster-strip-track {
+            justify-content: center;
+        }
+
+        .poster-strip-track::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .poster-strip-track::-webkit-scrollbar-thumb {
+            background: rgba(13, 19, 33, 0.18);
+            border-radius: 999px;
+        }
+
+        .poster-strip-image {
+            width: var(--poster-width);
+            height: var(--poster-height);
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 10px 22px rgba(13, 19, 33, 0.18);
+            scroll-snap-align: start;
+            flex-shrink: 0;
+        }
+
         .expandable-toggle {
             display: flex;
             align-items: center;
@@ -1444,6 +1493,10 @@
             <p>Explore winners and nominees in the 8 major categories since 1977</p>
         </header>
 
+        <section class="poster-strip is-empty" id="posterStripSection">
+            <div class="poster-strip-track" id="posterStrip"></div>
+        </section>
+
         <div class="filters">
             <button class="expandable-toggle" id="filtersToggle" type="button" aria-expanded="false" aria-controls="filtersControls">
                 Filters
@@ -1550,6 +1603,9 @@
             moviesExpanded: true
         };
 
+        const debugPosterStrip = true;
+        let posterStripReady = false;
+
         let latestMovieStats = [];
         let latestWinnerCount = 0;
         let latestNomineeCount = 0;
@@ -1618,6 +1674,11 @@
             setMoviesExpanded(state.moviesExpanded);
             document.getElementById('toggleNominees').checked = state.showNominees;
             render();
+            window.addEventListener('load', () => {
+                posterStripReady = true;
+                renderPosterStrip();
+                setupLazyPosters();
+            }, { once: true });
         }
 
         function populateYearSelect() {
@@ -1658,6 +1719,16 @@
                     state.moviesExpanded = !state.moviesExpanded;
                     setMoviesExpanded(state.moviesExpanded);
                 }
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.posterStripResizeRaf) {
+                    cancelAnimationFrame(window.posterStripResizeRaf);
+                }
+                window.posterStripResizeRaf = requestAnimationFrame(() => {
+                    renderPosterStrip();
+                    setupLazyPosters();
+                });
             });
 
             document.getElementById('yearSelect').addEventListener('change', (e) => {
@@ -1858,6 +1929,105 @@
 
         window.updateResultsCount = updateResultsCount;
 
+        function getPosterUrl(movieId) {
+            if (!movieId || !moviesData[movieId] || !moviesData[movieId].poster_path) {
+                return '';
+            }
+            return `https://image.tmdb.org/t/p/w154${moviesData[movieId].poster_path}`;
+        }
+
+        function renderPosterStrip() {
+            const section = document.getElementById('posterStripSection');
+            const track = document.getElementById('posterStrip');
+            const maxPosters = getPosterStripCapacity();
+            const data = getDisplayData();
+            const seen = new Set();
+            const posters = [];
+
+            const maybeAdd = (entry) => {
+                if (!entry || !entry.id || seen.has(entry.id)) return;
+                const url = getPosterUrl(entry.id);
+                if (!url) return;
+                seen.add(entry.id);
+                posters.push({ id: entry.id, title: entry.title || '', url });
+            };
+
+            data.forEach(item => {
+                if (posters.length >= maxPosters) return;
+                const winnerMatches = matchesSearch(item.winner);
+                const filteredNominees = item.nominees.filter(nominee => matchesSearch(nominee));
+                const showNominees = state.showNominees && (filteredNominees.length > 0 || !state.searchQuery);
+                const showWinner = !state.searchQuery || winnerMatches;
+
+                if (showWinner) {
+                    maybeAdd(item.winner);
+                }
+
+                if (showNominees) {
+                    filteredNominees.forEach(nominee => {
+                        if (posters.length >= maxPosters) return;
+                        maybeAdd(nominee);
+                    });
+                }
+            });
+
+            if (posters.length === 0) {
+                section.classList.add('is-empty');
+                track.innerHTML = '';
+                if (debugPosterStrip) {
+                    console.log('[poster-strip] empty', { maxPosters, dataCount: data.length });
+                }
+                return;
+            }
+
+            track.innerHTML = posters
+                .map(poster => `<img class="poster-strip-image" data-src="${poster.url}" alt="${poster.title}">`)
+                .join('');
+            section.classList.remove('is-empty');
+            section.classList.toggle('is-centered', posters.length < maxPosters);
+            if (debugPosterStrip) {
+                console.log('[poster-strip] render', {
+                    maxPosters,
+                    rendered: posters.length,
+                    sectionWidth: section.getBoundingClientRect().width,
+                    trackWidth: track.clientWidth,
+                    padLeft: parseFloat(getComputedStyle(section).paddingLeft),
+                    padRight: parseFloat(getComputedStyle(section).paddingRight)
+                });
+            }
+        }
+
+        function getPosterStripCapacity() {
+            const section = document.getElementById('posterStripSection');
+            const track = document.getElementById('posterStrip');
+            if (!section || !track) return 12;
+            const styles = getComputedStyle(section);
+            const posterWidth = parseFloat(styles.getPropertyValue('--poster-width')) || 64;
+            const posterGap = parseFloat(styles.getPropertyValue('--poster-gap')) || 12;
+            const padLeft = parseFloat(styles.paddingLeft) || 0;
+            const padRight = parseFloat(styles.paddingRight) || 0;
+            let sectionWidth = section.getBoundingClientRect().width || section.clientWidth || 0;
+            if (!sectionWidth) {
+                const container = section.closest('.container');
+                sectionWidth = (container && (container.getBoundingClientRect().width || container.clientWidth)) || 0;
+            }
+            const trackWidth = Math.max(0, sectionWidth - padLeft - padRight);
+            if (!trackWidth) return 12;
+            const perView = Math.max(1, Math.floor((trackWidth + posterGap) / (posterWidth + posterGap)));
+            if (debugPosterStrip) {
+                console.log('[poster-strip] capacity', {
+                    sectionWidth,
+                    trackWidth,
+                    padLeft,
+                    padRight,
+                    posterWidth,
+                    posterGap,
+                    perView
+                });
+            }
+            return perView;
+        }
+
         function renderResults() {
             const container = document.getElementById('resultsContainer');
             const data = getDisplayData();
@@ -1875,13 +2045,6 @@
                 updateResultsCount();
                 return;
             }
-
-            const getPosterUrl = (movieId) => {
-                if (!movieId || !moviesData[movieId] || !moviesData[movieId].poster_path) {
-                    return '';
-                }
-                return `https://image.tmdb.org/t/p/w154${moviesData[movieId].poster_path}`;
-            };
 
             data.forEach(item => {
                 const winnerMatches = matchesSearch(item.winner);
@@ -1979,7 +2142,6 @@
             });
 
             container.innerHTML = html || '<div class="no-results">No results match your search</div>';
-            setupLazyPosters();
             latestMovieStats = Object.values(movieStats)
                 .sort((a, b) => a.title.localeCompare(b.title) || parseInt(a.year) - parseInt(b.year));
             if (!state.showNominees) {
@@ -1995,6 +2157,10 @@
 
         function render() {
             renderResults();
+            if (posterStripReady) {
+                renderPosterStrip();
+                setupLazyPosters();
+            }
         }
 
         function openMoviesModal() {
@@ -2023,7 +2189,7 @@
         }
 
         function setupLazyPosters() {
-            const posters = document.querySelectorAll('.winner-poster[data-src]');
+            const posters = document.querySelectorAll('.winner-poster[data-src], .poster-strip-image[data-src]');
             if (posters.length === 0) return;
 
             if (!('IntersectionObserver' in window)) {
