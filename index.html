@@ -2142,6 +2142,7 @@
             });
 
             container.innerHTML = html || '<div class="no-results">No results match your search</div>';
+            setupLazyPosters();
             latestMovieStats = Object.values(movieStats)
                 .sort((a, b) => a.title.localeCompare(b.title) || parseInt(a.year) - parseInt(b.year));
             if (!state.showNominees) {
@@ -2194,6 +2195,10 @@
 
             if (!('IntersectionObserver' in window)) {
                 posters.forEach(img => {
+                    if (!img.dataset.src) {
+                        img.removeAttribute('data-src');
+                        return;
+                    }
                     img.src = img.dataset.src;
                     img.removeAttribute('data-src');
                 });
@@ -2204,6 +2209,11 @@
                 entries.forEach(entry => {
                     if (!entry.isIntersecting) return;
                     const img = entry.target;
+                    if (!img.dataset.src) {
+                        img.removeAttribute('data-src');
+                        obs.unobserve(img);
+                        return;
+                    }
                     img.src = img.dataset.src;
                     img.removeAttribute('data-src');
                     obs.unobserve(img);
