@@ -377,6 +377,24 @@
             display: none;
         }
 
+        .poster-strip.is-resizing .poster-strip-track {
+            min-height: var(--poster-height);
+        }
+
+        .poster-strip.is-resizing .poster-strip-info {
+            min-height: 2.2em;
+        }
+
+        .poster-strip-loading {
+            width: 100%;
+            text-align: center;
+            color: var(--ink-soft);
+            font-size: 0.85em;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            padding: 10px 0 6px;
+        }
+
         .poster-strip-track {
             display: flex;
             gap: var(--poster-gap);
@@ -1696,6 +1714,11 @@
         let posterStripShuffleTimer = null;
         let posterStripHighlightIndex = 0;
         let posterStripPaused = false;
+        let posterStripAutoPaused = false;
+        let posterStripIsResizing = false;
+        let posterStripLastCapacity = null;
+        let posterStripScrollResumeTimer = null;
+        let posterStripViewportResizeTimer = null;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -1830,15 +1853,53 @@
                 }
             });
 
-            window.addEventListener('resize', () => {
-                if (window.posterStripResizeRaf) {
-                    cancelAnimationFrame(window.posterStripResizeRaf);
+            const schedulePosterStripResize = () => {
+                if (posterStripReady) {
+                    const section = document.getElementById('posterStripSection');
+                    const track = document.getElementById('posterStrip');
+                    if (!posterStripIsResizing && section && track) {
+                        posterStripIsResizing = true;
+                        autoPausePosterStrip();
+                        track.innerHTML = '<div class="poster-strip-loading">Loading…</div>';
+                        updatePosterStripInfo(null);
+                        section.classList.add('is-resizing');
+                    }
                 }
-                window.posterStripResizeRaf = requestAnimationFrame(() => {
+                if (posterStripViewportResizeTimer) {
+                    clearTimeout(posterStripViewportResizeTimer);
+                }
+                posterStripViewportResizeTimer = window.setTimeout(() => {
+                    if (!posterStripReady) return;
+                    const nextCapacity = getPosterStripCapacity();
+                    if (posterStripLastCapacity !== null && nextCapacity === posterStripLastCapacity) {
+                        return;
+                    }
                     renderPosterStrip();
                     setupLazyPosters();
-                });
-            });
+                    const section = document.getElementById('posterStripSection');
+                    if (section) {
+                        section.classList.remove('is-resizing');
+                    }
+                    posterStripIsResizing = false;
+                    autoResumePosterStrip();
+                }, 1500);
+            };
+
+            window.addEventListener('resize', schedulePosterStripResize);
+
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', schedulePosterStripResize);
+            }
+
+            window.addEventListener('scroll', () => {
+                autoPausePosterStrip();
+                if (posterStripScrollResumeTimer) {
+                    clearTimeout(posterStripScrollResumeTimer);
+                }
+                posterStripScrollResumeTimer = window.setTimeout(() => {
+                    autoResumePosterStrip();
+                }, 180);
+            }, { passive: true });
 
             document.getElementById('yearSelect').addEventListener('change', (e) => {
                 state.selectedYear = e.target.value || null;
@@ -2049,6 +2110,7 @@
             const section = document.getElementById('posterStripSection');
             const track = document.getElementById('posterStrip');
             const maxPosters = getPosterStripCapacity();
+            posterStripLastCapacity = maxPosters;
             const data = getDisplayData();
             const seen = new Set();
             const posters = [];
@@ -2221,6 +2283,18 @@
             if (!posterStripPaused) return;
             posterStripPaused = false;
             startPosterHighlightCycle(true);
+        }
+
+        function autoPausePosterStrip() {
+            if (posterStripPaused) return;
+            posterStripAutoPaused = true;
+            pausePosterStrip();
+        }
+
+        function autoResumePosterStrip() {
+            if (!posterStripAutoPaused) return;
+            posterStripAutoPaused = false;
+            resumePosterStrip();
         }
 
         function highlightPosterById(movieId) {
