@@ -1710,6 +1710,7 @@
         let posterStripReady = false;
         const posterStripHighlightMs = 3000;
         const posterStripShuffleDelayMs = 2000;
+        const posterStripResizeWidthThreshold = 6;
         let posterStripHighlightTimer = null;
         let posterStripShuffleTimer = null;
         let posterStripHighlightIndex = 0;
@@ -1717,6 +1718,7 @@
         let posterStripAutoPaused = false;
         let posterStripIsResizing = false;
         let posterStripLastCapacity = null;
+        let posterStripLastWidth = null;
         let posterStripScrollResumeTimer = null;
         let posterStripViewportResizeTimer = null;
 
@@ -1857,12 +1859,26 @@
                 if (posterStripReady) {
                     const section = document.getElementById('posterStripSection');
                     const track = document.getElementById('posterStrip');
-                    if (!posterStripIsResizing && section && track) {
-                        posterStripIsResizing = true;
-                        autoPausePosterStrip();
-                        track.innerHTML = '<div class="poster-strip-loading">Loading…</div>';
-                        updatePosterStripInfo(null);
-                        section.classList.add('is-resizing');
+                    if (section && track) {
+                        const currentWidth = section.getBoundingClientRect().width || section.clientWidth || 0;
+                        if (!currentWidth) {
+                            return;
+                        }
+                        const nextCapacity = getPosterStripCapacity();
+                        if (posterStripLastCapacity !== null && nextCapacity === posterStripLastCapacity) {
+                            return;
+                        }
+                        if (posterStripLastWidth !== null
+                            && Math.abs(currentWidth - posterStripLastWidth) < posterStripResizeWidthThreshold) {
+                            return;
+                        }
+                        if (!posterStripIsResizing) {
+                            posterStripIsResizing = true;
+                            autoPausePosterStrip();
+                            track.innerHTML = '<div class="poster-strip-loading">Loading…</div>';
+                            updatePosterStripInfo(null);
+                            section.classList.add('is-resizing');
+                        }
                     }
                 }
                 if (posterStripViewportResizeTimer) {
@@ -1872,6 +1888,14 @@
                     if (!posterStripReady) return;
                     const nextCapacity = getPosterStripCapacity();
                     if (posterStripLastCapacity !== null && nextCapacity === posterStripLastCapacity) {
+                        if (posterStripIsResizing) {
+                            const section = document.getElementById('posterStripSection');
+                            if (section) {
+                                section.classList.remove('is-resizing');
+                            }
+                            posterStripIsResizing = false;
+                            autoResumePosterStrip();
+                        }
                         return;
                     }
                     renderPosterStrip();
@@ -2110,6 +2134,9 @@
             const section = document.getElementById('posterStripSection');
             const track = document.getElementById('posterStrip');
             const maxPosters = getPosterStripCapacity();
+            if (section) {
+                posterStripLastWidth = section.getBoundingClientRect().width || section.clientWidth || 0;
+            }
             posterStripLastCapacity = maxPosters;
             const data = getDisplayData();
             const seen = new Set();
