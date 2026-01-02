@@ -461,22 +461,29 @@
             color: var(--gold-deep);
         }
 
-        .poster-strip-info-chips {
-            display: inline-flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            justify-content: center;
-        }
-
-        .poster-strip-info-chip {
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: rgba(13, 19, 33, 0.08);
-            color: var(--ink-soft);
-            font-size: 0.72em;
+        .poster-strip-info-year {
+            font-size: 0.85em;
             font-weight: 600;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .poster-strip-info-awards {
+            font-size: 0.7em;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(13, 19, 33, 0.08);
+        }
+
+        .poster-strip-info-awards.is-winner {
+            background: rgba(242, 196, 104, 0.32);
+            border: 1px solid rgba(242, 196, 104, 0.55);
+            color: var(--ink);
         }
 
         .poster-strip .poster-strip-track {
@@ -2258,13 +2265,34 @@
             const titleClass = isWinner ? 'poster-strip-info-title is-winner' : 'poster-strip-info-title';
             const starClass = isBestPictureWinner ? 'poster-strip-info-star is-winner' : 'poster-strip-info-star';
             const star = isBestPictureNominee ? `<span class="${starClass}">&#9733;</span>` : '';
+            const wins = entry.wins || 0;
+            const nominations = entry.nominations || 0;
+            let awardsLine = '';
+            let winnerLine = '';
+            let nominatedLine = '';
+            if (wins === 1) {
+                winnerLine = 'Oscar Winner';
+            } else if (wins > 1) {
+                winnerLine = `Oscar Winner ${wins}X`;
+            }
+            if (nominations === 1) {
+                nominatedLine = 'Nominated';
+            } else if (nominations > 1) {
+                nominatedLine = `Nominated ${nominations}X`;
+            }
+            if (winnerLine && nominations === wins) {
+                nominatedLine = '';
+            }
+            if (winnerLine && nominatedLine) {
+                awardsLine = `${winnerLine} / ${nominatedLine}`;
+            } else {
+                awardsLine = winnerLine || nominatedLine;
+            }
+            const awardsClass = winnerLine ? 'poster-strip-info-awards is-winner' : 'poster-strip-info-awards';
             info.innerHTML = `
                 <div class="${titleClass}">${title}${star}</div>
-                <div class="poster-strip-info-chips">
-                    <span class="poster-strip-info-chip">${year}</span>
-                    <span class="poster-strip-info-chip">Wins ${entry.wins || 0}</span>
-                    <span class="poster-strip-info-chip">Noms ${entry.nominations || 0}</span>
-                </div>
+                <div class="poster-strip-info-year">${year}</div>
+                <div class="${awardsClass}">${awardsLine}</div>
             `.trim();
         }
 
