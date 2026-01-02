@@ -385,6 +385,64 @@
             border: var(--card-border);
             overflow: visible;
             animation: rise 0.7s ease-out;
+            position: relative;
+        }
+
+        .poster-wall-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(255, 255, 255, 0.92);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(13, 19, 33, 0.12);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .poster-wall-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(13, 19, 33, 0.18);
+            border-color: rgba(204, 155, 62, 0.6);
+        }
+
+        .poster-wall-button::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -8px;
+            right: 0;
+            transform: translateY(-100%);
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(13, 19, 33, 0.92);
+            color: #fff;
+            font-size: 0.7em;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+        }
+
+        .poster-wall-button:hover::after,
+        .poster-wall-button:focus-visible::after {
+            opacity: 1;
+        }
+
+        .poster-wall-button svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: var(--ink);
+            stroke-width: 1.6;
+            opacity: 0.85;
         }
 
         .poster-strip.is-empty {
@@ -1007,6 +1065,230 @@
             overflow: hidden;
         }
 
+        .wall-modal {
+            position: fixed;
+            inset: 0;
+            background: #efe2cf;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1100;
+        }
+
+        .wall-modal.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .wall-modal-content {
+            width: 100%;
+            height: 100%;
+            padding: 26px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .wall-controls {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: inline-flex;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(13, 19, 33, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+            z-index: 2;
+        }
+
+        .wall-control {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .wall-control:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .wall-control svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .wall-control.is-active {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .wall-countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 14px 22px;
+            border-radius: 999px;
+            background: rgba(13, 19, 33, 0.78);
+            color: #fff;
+            font-family: var(--title-font);
+            font-size: 2.4em;
+            letter-spacing: 0.08em;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 2;
+        }
+
+        .wall-countdown.is-visible {
+            opacity: 1;
+        }
+
+        .wall-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--ink);
+            font-size: 1.4em;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(13, 19, 33, 0.18);
+            z-index: 2;
+        }
+
+        .wall-modal .wall-controls,
+        .wall-modal .wall-modal-close {
+            transition: opacity 0.2s ease;
+        }
+
+        .wall-modal.is-ui-hidden .wall-controls,
+        .wall-modal.is-ui-hidden .wall-modal-close {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .wall-grid {
+            display: flex;
+            gap: var(--wall-gap, 10px);
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .wall-column {
+            width: var(--wall-poster-width, 120px);
+            height: var(--wall-column-height, 540px);
+            overflow: hidden;
+        }
+
+        .wall-column-track {
+            display: flex;
+            flex-direction: column;
+            gap: var(--wall-gap, 10px);
+            transform: translateY(0);
+            height: 100%;
+            justify-content: center;
+        }
+
+        .wall-column-track.is-shuffling {
+            animation: wallColumnShuffle 700ms ease-in-out forwards;
+            justify-content: flex-start;
+        }
+
+        .wall-poster {
+            width: var(--wall-poster-width, 120px);
+            height: var(--wall-poster-height, 180px);
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .wall-poster-wrap {
+            position: relative;
+            outline: none;
+        }
+
+        .wall-poster-tooltip-overlay {
+            position: absolute;
+            transform: translateX(-50%);
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(13, 19, 33, 0.92);
+            color: #fff;
+            text-align: left;
+            min-width: 220px;
+            max-width: 280px;
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 5;
+        }
+
+        .wall-poster-tooltip-overlay.is-visible {
+            opacity: 1;
+        }
+
+        .wall-poster-tooltip-title {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #fff;
+        }
+
+        .wall-poster-tooltip-year {
+            margin-top: 4px;
+            font-size: 0.72em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .wall-poster-tooltip-awards {
+            margin-top: 6px;
+            font-size: 0.7em;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .wall-tooltip-star {
+            margin-left: 4px;
+            color: var(--gold);
+        }
+
+        @keyframes wallColumnShuffle {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(calc(-1 * var(--wall-column-height, 540px)));
+            }
+        }
+
         .modal-header {
             display: flex;
             align-items: center;
@@ -1488,6 +1770,32 @@
                 font-size: 0.58em;
                 letter-spacing: 0.06em;
             }
+
+            .wall-modal-content {
+                padding: 16px;
+            }
+
+            .wall-modal-close {
+                top: 12px;
+                right: 12px;
+                width: 34px;
+                height: 34px;
+            }
+
+            .wall-controls {
+                bottom: 12px;
+                padding: 6px 8px;
+                gap: 8px;
+            }
+
+            .wall-control {
+                width: 30px;
+                height: 30px;
+            }
+
+            .wall-poster {
+                border-radius: 8px;
+            }
         }
 
         @media (max-width: 640px) {
@@ -1620,6 +1928,14 @@
         </header>
 
         <section class="poster-strip is-empty" id="posterStripSection">
+            <button id="postersWallOpen" class="poster-wall-button" type="button" aria-label="Open posters wall" data-tooltip="Poster Wall">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="3" width="6" height="6" rx="1.5"></rect>
+                    <rect x="15" y="3" width="6" height="6" rx="1.5"></rect>
+                    <rect x="3" y="15" width="6" height="6" rx="1.5"></rect>
+                    <rect x="15" y="15" width="6" height="6" rx="1.5"></rect>
+                </svg>
+            </button>
             <div class="poster-strip-track" id="posterStrip"></div>
             <div class="poster-strip-info" id="posterStripInfo" aria-live="polite"></div>
         </section>
@@ -1695,7 +2011,7 @@
         </div>
     </div>
 
-        <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
+    <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
         <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="movieDetailTitle">
             <button class="detail-close" type="button" aria-label="Close">×</button>
             <img id="movieDetailPoster" class="detail-poster" alt="">
@@ -1712,6 +2028,44 @@
                 <div id="movieDetailOverview" class="detail-overview"></div>
                 <div id="movieDetailCategories" class="detail-categories"></div>
             </div>
+        </div>
+    </div>
+
+    <div id="postersWallModal" class="wall-modal" aria-hidden="true">
+        <div class="wall-modal-content" role="dialog" aria-modal="true" aria-label="Posters Wall">
+            <div class="wall-controls" role="toolbar" aria-label="Poster wall controls">
+                <button id="postersWallPlay" class="wall-control" type="button" aria-label="Play shuffle">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <polygon points="9 7 17 12 9 17"></polygon>
+                    </svg>
+                </button>
+                <button id="postersWallShuffle" class="wall-control" type="button" aria-label="Shuffle posters">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M16 3h5v5"></path>
+                        <path d="M21 3l-7.5 7.5"></path>
+                        <path d="M3 7h4.5l2.5 2.5"></path>
+                        <path d="M16 21h5v-5"></path>
+                        <path d="M21 21l-7.5-7.5"></path>
+                        <path d="M3 17h4.5l2.5-2.5"></path>
+                    </svg>
+                </button>
+                <button id="postersWallFullscreen" class="wall-control" type="button" aria-label="Toggle fullscreen">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 3H3v5"></path>
+                        <path d="M3 3l6 6"></path>
+                        <path d="M16 3h5v5"></path>
+                        <path d="M21 3l-6 6"></path>
+                        <path d="M3 16v5h5"></path>
+                        <path d="M3 21l6-6"></path>
+                        <path d="M21 16v5h-5"></path>
+                        <path d="M21 21l-6-6"></path>
+                    </svg>
+                </button>
+            </div>
+            <button class="wall-modal-close" type="button" aria-label="Close">×</button>
+            <div id="postersWallGrid" class="wall-grid"></div>
+            <div id="postersWallTooltip" class="wall-poster-tooltip-overlay" aria-live="polite"></div>
+            <div id="postersWallCountdown" class="wall-countdown" aria-live="polite"></div>
         </div>
     </div>
 
@@ -1745,6 +2099,16 @@
         let posterStripLastWidth = null;
         let posterStripScrollResumeTimer = null;
         let posterStripViewportResizeTimer = null;
+        let postersWallOpen = false;
+        let postersWallResizeTimer = null;
+        let postersWallUiTimer = null;
+        let postersWallIdleTimer = null;
+        let postersWallCountdownTimer = null;
+        let postersWallCountdownValue = 0;
+        let postersWallSelection = [];
+        let postersWallShuffleTimer = null;
+        let postersWallIsShuffling = false;
+        let postersWallActiveWrap = null;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -1879,6 +2243,21 @@
                 }
             });
 
+            const postersWallOpenButton = document.getElementById('postersWallOpen');
+            if (postersWallOpenButton) {
+                postersWallOpenButton.addEventListener('click', openPostersWall);
+            }
+            const postersWallShuffleButton = document.getElementById('postersWallShuffle');
+            if (postersWallShuffleButton) {
+                postersWallShuffleButton.addEventListener('click', () => {
+                    shufflePostersWall();
+                });
+            }
+            const postersWallFullscreenButton = document.getElementById('postersWallFullscreen');
+            if (postersWallFullscreenButton) {
+                postersWallFullscreenButton.addEventListener('click', togglePostersWallFullscreen);
+            }
+
             const schedulePosterStripResize = () => {
                 if (posterStripReady) {
                     const section = document.getElementById('posterStripSection');
@@ -1934,9 +2313,11 @@
             };
 
             window.addEventListener('resize', schedulePosterStripResize);
+            window.addEventListener('resize', schedulePostersWallResize);
 
             if (window.visualViewport) {
                 window.visualViewport.addEventListener('resize', schedulePosterStripResize);
+                window.visualViewport.addEventListener('resize', schedulePostersWallResize);
             }
 
             window.addEventListener('scroll', () => {
@@ -1990,10 +2371,51 @@
                 }
             });
 
+            document.addEventListener('fullscreenchange', updatePostersWallFullscreenState);
+
+            const postersWallModal = document.getElementById('postersWallModal');
+            const postersWallClose = document.querySelector('.wall-modal-close');
+            if (postersWallClose) {
+                postersWallClose.addEventListener('click', closePostersWall);
+            }
+            if (postersWallModal) {
+                const wallActivity = () => {
+                    if (postersWallOpen) {
+                        showPostersWallUi();
+                        resetPostersWallInactivity();
+                    }
+                };
+                postersWallModal.addEventListener('mousemove', wallActivity);
+                postersWallModal.addEventListener('touchstart', wallActivity, { passive: true });
+                postersWallModal.addEventListener('click', wallActivity);
+                postersWallModal.addEventListener('click', (e) => {
+                    if (!postersWallOpen) return;
+                    const wrap = e.target.closest('.wall-poster-wrap');
+                    if (postersWallActiveWrap && postersWallActiveWrap !== wrap) {
+                        hidePostersWallTooltip();
+                    }
+                    if (wrap) {
+                        if (postersWallActiveWrap === wrap) {
+                            hidePostersWallTooltip();
+                        } else {
+                            showPostersWallTooltip(wrap);
+                        }
+                        return;
+                    }
+                    hidePostersWallTooltip();
+                });
+                postersWallModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'postersWallModal') {
+                        closePostersWall();
+                    }
+                });
+            }
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeMoviesModal();
                     closeMovieDetail();
+                    closePostersWall();
                 }
             });
 
@@ -2154,6 +2576,354 @@
             return `https://image.tmdb.org/t/p/w154${moviesData[movieId].poster_path}`;
         }
 
+        function getWallPosterUrl(movieId) {
+            if (!movieId || !moviesData[movieId] || !moviesData[movieId].poster_path) {
+                return '';
+            }
+            return `https://image.tmdb.org/t/p/w342${moviesData[movieId].poster_path}`;
+        }
+
+        function getPosterWallLayout() {
+            const isNarrow = window.innerWidth < 720;
+            const padding = isNarrow ? 16 : 26;
+            const gap = isNarrow ? 8 : 10;
+            const maxWidth = Math.max(0, window.innerWidth - padding * 2);
+            const maxHeight = Math.max(0, window.innerHeight - padding * 2);
+            const minPosterWidth = isNarrow ? 90 : 110;
+            const aspectRatio = 1.5;
+            let best = null;
+            const maxCols = Math.min(12, Math.max(2, Math.floor((maxWidth + gap) / (minPosterWidth + gap))));
+
+            for (let cols = 2; cols <= maxCols; cols += 1) {
+                const posterWidth = (maxWidth - gap * (cols - 1)) / cols;
+                if (posterWidth < minPosterWidth) continue;
+                const posterHeight = posterWidth * aspectRatio;
+                const rows = Math.floor((maxHeight + gap) / (posterHeight + gap));
+                if (rows < 1) continue;
+                const capacity = rows * cols;
+                if (!best || capacity > best.capacity || (capacity === best.capacity && posterWidth > best.posterWidth)) {
+                    best = {
+                        cols,
+                        rows,
+                        gap,
+                        posterWidth,
+                        posterHeight,
+                        capacity
+                    };
+                }
+            }
+
+            if (best) {
+                return best;
+            }
+
+            const posterWidth = Math.min(maxWidth, maxHeight / aspectRatio);
+            const posterHeight = posterWidth * aspectRatio;
+            return {
+                cols: 1,
+                rows: 1,
+                gap,
+                posterWidth,
+                posterHeight,
+                capacity: 1
+            };
+        }
+
+        function getPostersWallPool() {
+            return latestMovieStats
+                .map(movie => ({
+                    id: movie.id,
+                    title: movie.title || '',
+                    url: getWallPosterUrl(movie.id)
+                }))
+                .filter(poster => poster.url);
+        }
+
+        function getPostersWallSelection(layout) {
+            const posters = getPostersWallPool();
+            shuffleArray(posters);
+            return posters.slice(0, layout.capacity);
+        }
+
+        function getPostersWallColumns(selection, layout) {
+            const columns = [];
+            for (let col = 0; col < layout.cols; col += 1) {
+                const column = [];
+                for (let row = 0; row < layout.rows; row += 1) {
+                    const index = row * layout.cols + col;
+                    if (selection[index]) {
+                        column.push(selection[index]);
+                    }
+                }
+                columns.push(column);
+            }
+            return columns.filter(column => column.length > 0);
+        }
+
+        function preloadWallPosters(selection) {
+            if (!selection || selection.length === 0) {
+                return Promise.resolve();
+            }
+            const promises = selection.map(poster => new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                img.src = poster.url;
+            }));
+            return Promise.all(promises);
+        }
+
+        function renderPostersWall({ animate = false, nextSelection = null } = {}) {
+            const grid = document.getElementById('postersWallGrid');
+            if (!grid) return;
+            if (latestMovieStats.length === 0) {
+                grid.innerHTML = '';
+                postersWallSelection = [];
+                return;
+            }
+
+            const layout = getPosterWallLayout();
+            grid.style.setProperty('--wall-cols', layout.cols);
+            grid.style.setProperty('--wall-rows', layout.rows);
+            grid.style.setProperty('--wall-gap', `${layout.gap}px`);
+            grid.style.setProperty('--wall-poster-width', `${layout.posterWidth}px`);
+            grid.style.setProperty('--wall-poster-height', `${layout.posterHeight}px`);
+            grid.style.setProperty('--wall-column-height', `${layout.posterHeight * layout.rows + layout.gap * (layout.rows - 1)}px`);
+
+            const selection = nextSelection || getPostersWallSelection(layout);
+            const canAnimate = animate
+                && postersWallSelection.length === selection.length
+                && postersWallSelection.length > 0;
+
+            if (postersWallShuffleTimer) {
+                clearTimeout(postersWallShuffleTimer);
+                postersWallShuffleTimer = null;
+            }
+
+            if (!canAnimate) {
+                const columns = getPostersWallColumns(selection, layout);
+                grid.innerHTML = columns
+                    .map((column) => `
+                        <div class="wall-column">
+                            <div class="wall-column-track">
+                                ${column.map(poster => {
+                                    const info = getPosterAwardsInfo(poster.id);
+                                    const title = info ? escapeHtml(info.title) : escapeHtml(poster.title);
+                                    const year = info ? escapeHtml(info.year) : '';
+                                    const awards = info ? escapeHtml(info.awardsLine) : '';
+                                    const star = info && info.isBestPictureNominee;
+                                    return `
+                                        <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
+                                            <img class="wall-poster" data-src="${poster.url}" alt="${title}">
+                                        </div>
+                                    `.trim();
+                                }).join('')}
+                            </div>
+                        </div>
+                    `.trim())
+                    .join('');
+                postersWallSelection = selection;
+                setupLazyPosters();
+                hidePostersWallTooltip();
+                return;
+            }
+
+            const currentColumns = getPostersWallColumns(postersWallSelection, layout);
+            const nextColumns = getPostersWallColumns(selection, layout);
+            grid.innerHTML = currentColumns
+                .map((column, index) => {
+                    const nextColumn = nextColumns[index] || [];
+                    const delay = index * 120;
+                    return `
+                        <div class="wall-column">
+                            <div class="wall-column-track is-shuffling" style="animation-delay:${delay}ms">
+                                ${column.map(poster => {
+                                    const info = getPosterAwardsInfo(poster.id);
+                                    const title = info ? escapeHtml(info.title) : escapeHtml(poster.title);
+                                    const year = info ? escapeHtml(info.year) : '';
+                                    const awards = info ? escapeHtml(info.awardsLine) : '';
+                                    const star = info && info.isBestPictureNominee;
+                                    return `
+                                        <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
+                                            <img class="wall-poster" data-src="${poster.url}" alt="${title}">
+                                        </div>
+                                    `.trim();
+                                }).join('')}
+                                ${nextColumn.map(poster => {
+                                    const info = getPosterAwardsInfo(poster.id);
+                                    const title = info ? escapeHtml(info.title) : escapeHtml(poster.title);
+                                    const year = info ? escapeHtml(info.year) : '';
+                                    const awards = info ? escapeHtml(info.awardsLine) : '';
+                                    const star = info && info.isBestPictureNominee;
+                                    return `
+                                        <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
+                                            <img class="wall-poster" data-src="${poster.url}" alt="${title}">
+                                        </div>
+                                    `.trim();
+                                }).join('')}
+                            </div>
+                        </div>
+                    `.trim();
+                })
+                .join('');
+            setupLazyPosters();
+            hidePostersWallTooltip();
+
+            const totalDuration = 700 + (layout.cols - 1) * 120 + 60;
+            postersWallShuffleTimer = window.setTimeout(() => {
+                postersWallShuffleTimer = null;
+                renderPostersWall({ animate: false, nextSelection: selection });
+            }, totalDuration);
+        }
+
+        function togglePostersWallFullscreen() {
+            const modal = document.getElementById('postersWallModal');
+            if (!modal) return;
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                modal.requestFullscreen();
+            }
+        }
+
+        function updatePostersWallFullscreenState() {
+            const button = document.getElementById('postersWallFullscreen');
+            if (!button) return;
+            if (document.fullscreenElement) {
+                button.classList.add('is-active');
+            } else {
+                button.classList.remove('is-active');
+            }
+        }
+
+        function hidePostersWallTooltip() {
+            const tooltip = document.getElementById('postersWallTooltip');
+            if (!tooltip) return;
+            tooltip.classList.remove('is-visible');
+            tooltip.style.left = '';
+            tooltip.style.top = '';
+            tooltip.innerHTML = '';
+            postersWallActiveWrap = null;
+        }
+
+        function showPostersWallTooltip(wrap) {
+            const tooltip = document.getElementById('postersWallTooltip');
+            const modalContent = document.querySelector('.wall-modal-content');
+            if (!tooltip || !modalContent || !wrap) return;
+            const title = wrap.dataset.title || '';
+            const year = wrap.dataset.year || '';
+            const awards = wrap.dataset.awards || '';
+            const star = wrap.dataset.star === 'true' ? '<span class="wall-tooltip-star">&#9733;</span>' : '';
+            tooltip.innerHTML = `
+                <div class="wall-poster-tooltip-title">${title}${star}</div>
+                <div class="wall-poster-tooltip-year">${year}</div>
+                <div class="wall-poster-tooltip-awards">${awards}</div>
+            `.trim();
+
+            const modalRect = modalContent.getBoundingClientRect();
+            const wrapRect = wrap.getBoundingClientRect();
+            tooltip.classList.add('is-visible');
+
+            requestAnimationFrame(() => {
+                const tooltipRect = tooltip.getBoundingClientRect();
+                let left = wrapRect.left - modalRect.left + wrapRect.width / 2;
+                let top = wrapRect.top - modalRect.top - tooltipRect.height - 10;
+                const minLeft = 12 + tooltipRect.width / 2;
+                const maxLeft = modalRect.width - 12 - tooltipRect.width / 2;
+                left = Math.min(Math.max(left, minLeft), maxLeft);
+                top = Math.max(top, 12);
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+            });
+
+            postersWallActiveWrap = wrap;
+        }
+
+        function showPostersWallUi() {
+            const modal = document.getElementById('postersWallModal');
+            if (!modal) return;
+            modal.classList.remove('is-ui-hidden');
+            if (postersWallUiTimer) {
+                clearTimeout(postersWallUiTimer);
+            }
+            postersWallUiTimer = window.setTimeout(() => {
+                modal.classList.add('is-ui-hidden');
+            }, 5000);
+        }
+
+        function clearPostersWallUiTimer() {
+            if (postersWallUiTimer) {
+                clearTimeout(postersWallUiTimer);
+                postersWallUiTimer = null;
+            }
+        }
+
+        function hidePostersWallCountdown() {
+            const countdown = document.getElementById('postersWallCountdown');
+            if (!countdown) return;
+            countdown.textContent = '';
+            countdown.classList.remove('is-visible');
+        }
+
+        function updatePostersWallCountdown(value) {
+            const countdown = document.getElementById('postersWallCountdown');
+            if (!countdown) return;
+            countdown.textContent = value;
+            countdown.classList.add('is-visible');
+        }
+
+        function clearPostersWallInactivityTimers() {
+            if (postersWallIdleTimer) {
+                clearTimeout(postersWallIdleTimer);
+                postersWallIdleTimer = null;
+            }
+            if (postersWallCountdownTimer) {
+                clearInterval(postersWallCountdownTimer);
+                postersWallCountdownTimer = null;
+            }
+        }
+
+        function startPostersWallCountdown() {
+            postersWallCountdownValue = 5;
+            updatePostersWallCountdown(postersWallCountdownValue);
+            if (postersWallCountdownTimer) {
+                clearInterval(postersWallCountdownTimer);
+            }
+            postersWallCountdownTimer = window.setInterval(() => {
+                postersWallCountdownValue -= 1;
+                if (postersWallCountdownValue <= 0) {
+                    clearPostersWallInactivityTimers();
+                    hidePostersWallCountdown();
+                    shufflePostersWall();
+                    resetPostersWallInactivity();
+                    return;
+                }
+                updatePostersWallCountdown(postersWallCountdownValue);
+            }, 1000);
+        }
+
+        function shufflePostersWall() {
+            if (!postersWallOpen || postersWallIsShuffling) return;
+            const layout = getPosterWallLayout();
+            const selection = getPostersWallSelection(layout);
+            postersWallIsShuffling = true;
+            preloadWallPosters(selection).then(() => {
+                if (!postersWallOpen) return;
+                renderPostersWall({ animate: true, nextSelection: selection });
+            }).finally(() => {
+                postersWallIsShuffling = false;
+            });
+        }
+
+        function resetPostersWallInactivity() {
+            clearPostersWallInactivityTimers();
+            hidePostersWallCountdown();
+            if (!postersWallOpen) return;
+            postersWallIdleTimer = window.setTimeout(() => {
+                startPostersWallCountdown();
+            }, 25000);
+        }
+
         function renderPosterStrip() {
             const section = document.getElementById('posterStripSection');
             const track = document.getElementById('posterStrip');
@@ -2239,13 +3009,17 @@
             }
         }
 
-        function updatePosterStripInfo(movieId) {
-            const info = document.getElementById('posterStripInfo');
-            if (!info) return;
-            if (!movieId || !moviesData[movieId]) {
-                info.textContent = '';
-                return;
-            }
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getPosterAwardsInfo(movieId) {
+            if (!movieId || !moviesData[movieId]) return null;
             const movie = moviesData[movieId];
             const stats = getGlobalMovieStats();
             const entry = stats[`id:${movieId}`] || { wins: 0, nominations: 0 };
@@ -2261,10 +3035,6 @@
                 if (item.category !== 'Best Picture') return false;
                 return item.winner && item.winner.id === movieId;
             });
-            const isWinner = (entry.wins || 0) > 0;
-            const titleClass = isWinner ? 'poster-strip-info-title is-winner' : 'poster-strip-info-title';
-            const starClass = isBestPictureWinner ? 'poster-strip-info-star is-winner' : 'poster-strip-info-star';
-            const star = isBestPictureNominee ? `<span class="${starClass}">&#9733;</span>` : '';
             const wins = entry.wins || 0;
             const nominations = entry.nominations || 0;
             let awardsLine = '';
@@ -2288,11 +3058,32 @@
             } else {
                 awardsLine = winnerLine || nominatedLine;
             }
-            const awardsClass = winnerLine ? 'poster-strip-info-awards is-winner' : 'poster-strip-info-awards';
+            return {
+                title,
+                year,
+                awardsLine,
+                isWinner: wins > 0,
+                isBestPictureNominee,
+                isBestPictureWinner
+            };
+        }
+
+        function updatePosterStripInfo(movieId) {
+            const info = document.getElementById('posterStripInfo');
+            if (!info) return;
+            const posterInfo = getPosterAwardsInfo(movieId);
+            if (!posterInfo) {
+                info.textContent = '';
+                return;
+            }
+            const titleClass = posterInfo.isWinner ? 'poster-strip-info-title is-winner' : 'poster-strip-info-title';
+            const starClass = posterInfo.isBestPictureWinner ? 'poster-strip-info-star is-winner' : 'poster-strip-info-star';
+            const star = posterInfo.isBestPictureNominee ? `<span class="${starClass}">&#9733;</span>` : '';
+            const awardsClass = posterInfo.isWinner ? 'poster-strip-info-awards is-winner' : 'poster-strip-info-awards';
             info.innerHTML = `
-                <div class="${titleClass}">${title}${star}</div>
-                <div class="poster-strip-info-year">${year}</div>
-                <div class="${awardsClass}">${awardsLine}</div>
+                <div class="${titleClass}">${posterInfo.title}${star}</div>
+                <div class="poster-strip-info-year">${posterInfo.year}</div>
+                <div class="${awardsClass}">${posterInfo.awardsLine}</div>
             `.trim();
         }
 
@@ -2545,6 +3336,58 @@
                 renderPosterStrip();
                 setupLazyPosters();
             }
+            if (postersWallOpen) {
+                renderPostersWall();
+            }
+        }
+
+        function openPostersWall() {
+            const modal = document.getElementById('postersWallModal');
+            if (!modal) return;
+            postersWallOpen = true;
+            const layout = getPosterWallLayout();
+            const selection = getPostersWallSelection(layout);
+            preloadWallPosters(selection).then(() => {
+                if (!postersWallOpen) return;
+                renderPostersWall({ animate: false, nextSelection: selection });
+            });
+            updatePostersWallFullscreenState();
+            showPostersWallUi();
+            resetPostersWallInactivity();
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        }
+
+        function closePostersWall() {
+            const modal = document.getElementById('postersWallModal');
+            if (!modal || !modal.classList.contains('is-open')) return;
+            postersWallOpen = false;
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            clearPostersWallUiTimer();
+            clearPostersWallInactivityTimers();
+            hidePostersWallCountdown();
+            hidePostersWallTooltip();
+            if (postersWallShuffleTimer) {
+                clearTimeout(postersWallShuffleTimer);
+                postersWallShuffleTimer = null;
+            }
+            modal.classList.remove('is-open');
+            modal.classList.remove('is-ui-hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+        }
+
+        function schedulePostersWallResize() {
+            if (!postersWallOpen) return;
+            if (postersWallResizeTimer) {
+                clearTimeout(postersWallResizeTimer);
+            }
+            postersWallResizeTimer = window.setTimeout(() => {
+                renderPostersWall();
+            }, 200);
         }
 
         function openMoviesModal() {
@@ -2573,7 +3416,7 @@
         }
 
         function setupLazyPosters() {
-            const posters = document.querySelectorAll('.winner-poster[data-src], .poster-strip-image[data-src]');
+            const posters = document.querySelectorAll('.winner-poster[data-src], .poster-strip-image[data-src], .wall-poster[data-src]');
             if (posters.length === 0) return;
 
             if (!('IntersectionObserver' in window)) {
