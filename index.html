@@ -385,6 +385,39 @@
             border: var(--card-border);
             overflow: visible;
             animation: rise 0.7s ease-out;
+            position: relative;
+        }
+
+        .poster-wall-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(255, 255, 255, 0.92);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(13, 19, 33, 0.12);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .poster-wall-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(13, 19, 33, 0.18);
+            border-color: rgba(204, 155, 62, 0.6);
+        }
+
+        .poster-wall-button svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: var(--ink);
+            stroke-width: 1.6;
+            opacity: 0.85;
         }
 
         .poster-strip.is-empty {
@@ -1007,6 +1040,67 @@
             overflow: hidden;
         }
 
+        .wall-modal {
+            position: fixed;
+            inset: 0;
+            background: #efe2cf;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1100;
+        }
+
+        .wall-modal.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .wall-modal-content {
+            width: 100%;
+            height: 100%;
+            padding: 26px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .wall-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--ink);
+            font-size: 1.4em;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(13, 19, 33, 0.18);
+        }
+
+        .wall-grid {
+            display: grid;
+            gap: var(--wall-gap, 10px);
+            grid-template-columns: repeat(var(--wall-cols, 4), var(--wall-poster-width, 120px));
+            grid-template-rows: repeat(var(--wall-rows, 3), var(--wall-poster-height, 180px));
+            justify-content: center;
+            align-content: center;
+        }
+
+        .wall-poster {
+            width: var(--wall-poster-width, 120px);
+            height: var(--wall-poster-height, 180px);
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+        }
+
         .modal-header {
             display: flex;
             align-items: center;
@@ -1488,6 +1582,21 @@
                 font-size: 0.58em;
                 letter-spacing: 0.06em;
             }
+
+            .wall-modal-content {
+                padding: 16px;
+            }
+
+            .wall-modal-close {
+                top: 12px;
+                right: 12px;
+                width: 34px;
+                height: 34px;
+            }
+
+            .wall-poster {
+                border-radius: 8px;
+            }
         }
 
         @media (max-width: 640px) {
@@ -1620,6 +1729,14 @@
         </header>
 
         <section class="poster-strip is-empty" id="posterStripSection">
+            <button id="postersWallOpen" class="poster-wall-button" type="button" aria-label="Open posters wall">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="3" width="6" height="6" rx="1.5"></rect>
+                    <rect x="15" y="3" width="6" height="6" rx="1.5"></rect>
+                    <rect x="3" y="15" width="6" height="6" rx="1.5"></rect>
+                    <rect x="15" y="15" width="6" height="6" rx="1.5"></rect>
+                </svg>
+            </button>
             <div class="poster-strip-track" id="posterStrip"></div>
             <div class="poster-strip-info" id="posterStripInfo" aria-live="polite"></div>
         </section>
@@ -1695,7 +1812,7 @@
         </div>
     </div>
 
-        <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
+    <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
         <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="movieDetailTitle">
             <button class="detail-close" type="button" aria-label="Close">×</button>
             <img id="movieDetailPoster" class="detail-poster" alt="">
@@ -1712,6 +1829,13 @@
                 <div id="movieDetailOverview" class="detail-overview"></div>
                 <div id="movieDetailCategories" class="detail-categories"></div>
             </div>
+        </div>
+    </div>
+
+    <div id="postersWallModal" class="wall-modal" aria-hidden="true">
+        <div class="wall-modal-content" role="dialog" aria-modal="true" aria-label="Posters Wall">
+            <button class="wall-modal-close" type="button" aria-label="Close">×</button>
+            <div id="postersWallGrid" class="wall-grid"></div>
         </div>
     </div>
 
@@ -1745,6 +1869,8 @@
         let posterStripLastWidth = null;
         let posterStripScrollResumeTimer = null;
         let posterStripViewportResizeTimer = null;
+        let postersWallOpen = false;
+        let postersWallResizeTimer = null;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -1879,6 +2005,11 @@
                 }
             });
 
+            const postersWallOpenButton = document.getElementById('postersWallOpen');
+            if (postersWallOpenButton) {
+                postersWallOpenButton.addEventListener('click', openPostersWall);
+            }
+
             const schedulePosterStripResize = () => {
                 if (posterStripReady) {
                     const section = document.getElementById('posterStripSection');
@@ -1934,9 +2065,11 @@
             };
 
             window.addEventListener('resize', schedulePosterStripResize);
+            window.addEventListener('resize', schedulePostersWallResize);
 
             if (window.visualViewport) {
                 window.visualViewport.addEventListener('resize', schedulePosterStripResize);
+                window.visualViewport.addEventListener('resize', schedulePostersWallResize);
             }
 
             window.addEventListener('scroll', () => {
@@ -1990,10 +2123,24 @@
                 }
             });
 
+            const postersWallModal = document.getElementById('postersWallModal');
+            const postersWallClose = document.querySelector('.wall-modal-close');
+            if (postersWallClose) {
+                postersWallClose.addEventListener('click', closePostersWall);
+            }
+            if (postersWallModal) {
+                postersWallModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'postersWallModal') {
+                        closePostersWall();
+                    }
+                });
+            }
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeMoviesModal();
                     closeMovieDetail();
+                    closePostersWall();
                 }
             });
 
@@ -2152,6 +2299,92 @@
                 return '';
             }
             return `https://image.tmdb.org/t/p/w154${moviesData[movieId].poster_path}`;
+        }
+
+        function getWallPosterUrl(movieId) {
+            if (!movieId || !moviesData[movieId] || !moviesData[movieId].poster_path) {
+                return '';
+            }
+            return `https://image.tmdb.org/t/p/w342${moviesData[movieId].poster_path}`;
+        }
+
+        function getPosterWallLayout() {
+            const isNarrow = window.innerWidth < 720;
+            const padding = isNarrow ? 16 : 26;
+            const gap = isNarrow ? 8 : 10;
+            const maxWidth = Math.max(0, window.innerWidth - padding * 2);
+            const maxHeight = Math.max(0, window.innerHeight - padding * 2);
+            const minPosterWidth = isNarrow ? 90 : 110;
+            const aspectRatio = 1.5;
+            let best = null;
+            const maxCols = Math.min(12, Math.max(2, Math.floor((maxWidth + gap) / (minPosterWidth + gap))));
+
+            for (let cols = 2; cols <= maxCols; cols += 1) {
+                const posterWidth = (maxWidth - gap * (cols - 1)) / cols;
+                if (posterWidth < minPosterWidth) continue;
+                const posterHeight = posterWidth * aspectRatio;
+                const rows = Math.floor((maxHeight + gap) / (posterHeight + gap));
+                if (rows < 1) continue;
+                const capacity = rows * cols;
+                if (!best || capacity > best.capacity || (capacity === best.capacity && posterWidth > best.posterWidth)) {
+                    best = {
+                        cols,
+                        rows,
+                        gap,
+                        posterWidth,
+                        posterHeight,
+                        capacity
+                    };
+                }
+            }
+
+            if (best) {
+                return best;
+            }
+
+            const posterWidth = Math.min(maxWidth, maxHeight / aspectRatio);
+            const posterHeight = posterWidth * aspectRatio;
+            return {
+                cols: 1,
+                rows: 1,
+                gap,
+                posterWidth,
+                posterHeight,
+                capacity: 1
+            };
+        }
+
+        function renderPostersWall() {
+            const grid = document.getElementById('postersWallGrid');
+            if (!grid) return;
+            if (latestMovieStats.length === 0) {
+                grid.innerHTML = '';
+                return;
+            }
+
+            const layout = getPosterWallLayout();
+            grid.style.setProperty('--wall-cols', layout.cols);
+            grid.style.setProperty('--wall-rows', layout.rows);
+            grid.style.setProperty('--wall-gap', `${layout.gap}px`);
+            grid.style.setProperty('--wall-poster-width', `${layout.posterWidth}px`);
+            grid.style.setProperty('--wall-poster-height', `${layout.posterHeight}px`);
+
+            const posters = latestMovieStats
+                .map(movie => ({
+                    id: movie.id,
+                    title: movie.title || '',
+                    url: getWallPosterUrl(movie.id)
+                }))
+                .filter(poster => poster.url);
+
+            shuffleArray(posters);
+            const selection = posters.slice(0, layout.capacity);
+            grid.innerHTML = selection
+                .map(poster => `
+                    <img class="wall-poster" data-src="${poster.url}" alt="${poster.title}">
+                `.trim())
+                .join('');
+            setupLazyPosters();
         }
 
         function renderPosterStrip() {
@@ -2545,6 +2778,38 @@
                 renderPosterStrip();
                 setupLazyPosters();
             }
+            if (postersWallOpen) {
+                renderPostersWall();
+            }
+        }
+
+        function openPostersWall() {
+            const modal = document.getElementById('postersWallModal');
+            if (!modal) return;
+            postersWallOpen = true;
+            renderPostersWall();
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        }
+
+        function closePostersWall() {
+            const modal = document.getElementById('postersWallModal');
+            if (!modal || !modal.classList.contains('is-open')) return;
+            postersWallOpen = false;
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+        }
+
+        function schedulePostersWallResize() {
+            if (!postersWallOpen) return;
+            if (postersWallResizeTimer) {
+                clearTimeout(postersWallResizeTimer);
+            }
+            postersWallResizeTimer = window.setTimeout(() => {
+                renderPostersWall();
+            }, 200);
         }
 
         function openMoviesModal() {
@@ -2573,7 +2838,7 @@
         }
 
         function setupLazyPosters() {
-            const posters = document.querySelectorAll('.winner-poster[data-src], .poster-strip-image[data-src]');
+            const posters = document.querySelectorAll('.winner-poster[data-src], .poster-strip-image[data-src], .wall-poster[data-src]');
             if (posters.length === 0) return;
 
             if (!('IntersectionObserver' in window)) {
