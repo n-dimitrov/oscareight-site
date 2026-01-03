@@ -1703,6 +1703,112 @@
             line-height: 1.5;
         }
 
+        .detail-providers {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(13, 19, 33, 0.04);
+            border: 1px solid rgba(13, 19, 33, 0.08);
+        }
+
+        .detail-providers.is-hidden {
+            display: none;
+        }
+
+        .providers-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78em;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            margin-bottom: 10px;
+        }
+
+        .providers-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .providers-toggle {
+            border: 1px solid rgba(13, 19, 33, 0.2);
+            background: #fff;
+            color: var(--ink);
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        .providers-toggle:hover {
+            border-color: var(--gold-deep);
+        }
+
+        .providers-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease, opacity 0.2s ease;
+        }
+
+        .providers-content.is-open {
+            max-height: 420px;
+            opacity: 1;
+            overflow: auto;
+        }
+
+        .providers-groups {
+            display: grid;
+            gap: 12px;
+        }
+
+        .provider-group-title {
+            font-size: 0.72em;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            margin-bottom: 6px;
+        }
+
+        .provider-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .provider-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: #fff;
+            font-size: 0.85em;
+            color: var(--ink);
+        }
+
+        .provider-logo {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: rgba(13, 19, 33, 0.08);
+        }
+
+        .providers-country {
+            font-size: 0.82em;
+            color: var(--teal);
+        }
+
+        .providers-empty,
+        .providers-loading {
+            font-size: 0.9em;
+            color: var(--ink-soft);
+        }
+
         .detail-close {
             position: absolute;
             top: 18px;
@@ -2096,6 +2202,7 @@
                 </div>
                 <div id="movieDetailMeta" class="detail-meta"></div>
                 <div id="movieDetailOverview" class="detail-overview"></div>
+                <div id="movieDetailProviders" class="detail-providers"></div>
                 <div id="movieDetailCategories" class="detail-categories"></div>
             </div>
         </div>
@@ -2154,7 +2261,6 @@
             moviesExpanded: true
         };
 
-        const debugPosterStrip = true;
         let posterStripReady = false;
         const posterStripHighlightMs = 3000;
         const posterStripShuffleDelayMs = 2000;
@@ -3207,9 +3313,6 @@
                 section.classList.add('is-empty');
                 track.innerHTML = '';
                 updatePosterStripInfo(null);
-                if (debugPosterStrip) {
-                    console.log('[poster-strip] empty', { maxPosters, dataCount: data.length });
-                }
                 return;
             }
 
@@ -3228,16 +3331,6 @@
             updatePosterStripInfo(visiblePosters[0] ? visiblePosters[0].id : null);
             if (!posterStripPaused) {
                 startPosterHighlightCycle();
-            }
-            if (debugPosterStrip) {
-                console.log('[poster-strip] render', {
-                    maxPosters,
-                    rendered: visiblePosters.length,
-                    sectionWidth: section.getBoundingClientRect().width,
-                    trackWidth: track.clientWidth,
-                    padLeft: parseFloat(getComputedStyle(section).paddingLeft),
-                    padRight: parseFloat(getComputedStyle(section).paddingRight)
-                });
             }
         }
 
@@ -3427,17 +3520,6 @@
             const trackWidth = Math.max(0, sectionWidth - padLeft - padRight);
             if (!trackWidth) return 12;
             const perView = Math.max(1, Math.floor((trackWidth + posterGap) / (posterWidth + posterGap)));
-            if (debugPosterStrip) {
-                console.log('[poster-strip] capacity', {
-                    sectionWidth,
-                    trackWidth,
-                    padLeft,
-                    padRight,
-                    posterWidth,
-                    posterGap,
-                    perView
-                });
-            }
             return perView;
         }
 
@@ -3758,6 +3840,10 @@
                 })
                 .join('');
 
+            if (window.prepareMovieProviders) {
+                window.prepareMovieProviders(movie);
+            }
+
             const modal = document.getElementById('movieDetailModal');
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
@@ -4004,13 +4090,22 @@
   const googleSignInButton = document.getElementById('googleSignInButton');
   const watchedLabel = document.getElementById('watchedLabel');
   const watchedToggle = document.getElementById('watchedToggle');
+  const movieDetailProviders = document.getElementById('movieDetailProviders');
 
   let currentUser = null;
+  let currentCountryCode = null;
   let watchedIds = new Set();
   let currentMovieId = null;
+  let currentMovieData = null;
+  let providersRequestId = 0;
+  const watchProvidersCache = new Map();
+  let providersToggle = null;
+  let providersContent = null;
+  let providersExpanded = false;
 
   function updateCountryDisplay(code, name, suffix = '') {
     if (!userCountry) return;
+    currentCountryCode = code || null;
     if (!code || !name) {
       userCountry.textContent = 'Not set';
       return;
@@ -4170,6 +4265,207 @@
     }
   }
 
+  function getEffectiveCountryCode() {
+    return currentCountryCode || getCountryFromLocale();
+  }
+
+  function isMovieDetailOpen() {
+    const modal = document.getElementById('movieDetailModal');
+    return Boolean(modal && modal.classList.contains('is-open'));
+  }
+
+  function updateProvidersToggle() {
+    if (!providersToggle || !providersContent) return;
+    providersToggle.setAttribute('aria-expanded', providersExpanded ? 'true' : 'false');
+    providersToggle.textContent = providersExpanded ? 'Hide' : 'Show';
+    providersContent.classList.toggle('is-open', providersExpanded);
+  }
+
+  function updateProvidersCountry() {
+    const providersCountry = document.getElementById('providersCountry');
+    if (!providersCountry) return;
+    providersCountry.textContent = getEffectiveCountryCode() || '';
+  }
+
+  function setupProvidersSection() {
+    if (!movieDetailProviders || movieDetailProviders.dataset.ready === 'true') return;
+    movieDetailProviders.dataset.ready = 'true';
+    movieDetailProviders.innerHTML = `
+      <div class="providers-header">
+        <span>Where to watch</span>
+        <div class="providers-actions">
+          <span id="providersCountry" class="providers-country"></span>
+          <button id="providersToggle" class="providers-toggle" type="button" aria-expanded="false">Show</button>
+        </div>
+      </div>
+      <div id="providersContent" class="providers-content"></div>
+    `;
+    providersToggle = document.getElementById('providersToggle');
+    providersContent = document.getElementById('providersContent');
+    providersToggle.addEventListener('click', () => {
+      providersExpanded = !providersExpanded;
+      updateProvidersToggle();
+      if (providersExpanded && currentMovieData) {
+        loadMovieProviders(currentMovieData);
+      }
+    });
+    updateProvidersToggle();
+    updateProvidersCountry();
+  }
+
+  function renderProvidersShell(contentHtml) {
+    if (!movieDetailProviders) return;
+    setupProvidersSection();
+    if (!providersContent) return;
+    movieDetailProviders.classList.remove('is-hidden');
+    updateProvidersCountry();
+    providersContent.innerHTML = contentHtml;
+  }
+
+  function renderProvidersMessage(message) {
+    renderProvidersShell(`<div class="providers-empty">${message}</div>`);
+  }
+
+  function renderProvidersLoading() {
+    renderProvidersShell('<div class="providers-loading">Loading watch providers…</div>');
+  }
+
+  function hideProviders() {
+    if (!movieDetailProviders) return;
+    movieDetailProviders.classList.add('is-hidden');
+    movieDetailProviders.innerHTML = '';
+    movieDetailProviders.dataset.ready = '';
+    providersToggle = null;
+    providersContent = null;
+    providersExpanded = false;
+  }
+
+  function prepareMovieProviders(movie) {
+    currentMovieData = movie;
+    if (!movieDetailProviders) return;
+    if (!currentUser) {
+      hideProviders();
+      return;
+    }
+    providersRequestId += 1;
+    setupProvidersSection();
+    if (!providersContent) return;
+    providersExpanded = false;
+    updateProvidersToggle();
+    updateProvidersCountry();
+    providersContent.innerHTML = '';
+    movieDetailProviders.classList.remove('is-hidden');
+  }
+
+  function renderProvidersData(data) {
+    const providers = data && data.providers ? data.providers : null;
+    if (!providers) {
+      renderProvidersMessage('No watch providers available.');
+      return;
+    }
+    const groups = [
+      { key: 'flatrate', label: 'Stream' },
+      { key: 'rent', label: 'Rent' },
+      { key: 'buy', label: 'Buy' }
+    ];
+    const groupHtml = groups
+      .map(({ key, label }) => {
+        const list = Array.isArray(providers[key]) ? providers[key] : [];
+        if (!list.length) return '';
+        const items = list
+          .slice()
+          .sort((a, b) => (a.display_priority || 0) - (b.display_priority || 0))
+          .map((provider) => {
+            const logo = provider.logo_path
+              ? `https://image.tmdb.org/t/p/w92${provider.logo_path}`
+              : '';
+            const logoHtml = logo
+              ? `<img class="provider-logo" src="${logo}" alt="${provider.provider_name}" loading="lazy">`
+              : '<span class="provider-logo" aria-hidden="true"></span>';
+            return `
+              <div class="provider-card">
+                ${logoHtml}
+                <span class="provider-name">${provider.provider_name}</span>
+              </div>
+            `;
+          })
+          .join('');
+        return `
+          <div class="provider-group">
+            <div class="provider-group-title">${label}</div>
+            <div class="provider-list">${items}</div>
+          </div>
+        `;
+      })
+      .filter(Boolean)
+      .join('');
+
+    if (!groupHtml) {
+      renderProvidersMessage('No watch providers available.');
+      return;
+    }
+
+    renderProvidersShell(`<div class="providers-groups">${groupHtml}</div>`);
+  }
+
+  async function loadMovieProviders(movie) {
+    if (!movieDetailProviders) return;
+    setupProvidersSection();
+    currentMovieData = movie;
+    if (!providersContent) return;
+    if (!movie || !movie.tmdb_id) {
+      hideProviders();
+      return;
+    }
+    if (!currentUser) {
+      hideProviders();
+      return;
+    }
+    const countryCode = getEffectiveCountryCode();
+    if (!countryCode) {
+      renderProvidersMessage('Set a country to see watch providers.');
+      return;
+    }
+
+    const cacheKey = `${movie.tmdb_id}:${countryCode}`;
+    if (watchProvidersCache.has(cacheKey)) {
+      renderProvidersData(watchProvidersCache.get(cacheKey));
+      return;
+    }
+
+    const requestId = providersRequestId + 1;
+    providersRequestId = requestId;
+    renderProvidersLoading();
+
+    try {
+      const token = await currentUser.getIdToken(true);
+      const url = `https://oscareight-api-389635339946.europe-west3.run.app/watch-providers?movieId=${movie.tmdb_id}&country=${countryCode}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (providersRequestId !== requestId) return;
+      if (!response.ok) {
+        if (response.status === 401) {
+          renderProvidersMessage('Sign in to see where to watch.');
+        } else {
+          renderProvidersMessage('Could not load watch providers.');
+        }
+        return;
+      }
+      const data = await response.json();
+      watchProvidersCache.set(cacheKey, data);
+      renderProvidersData(data);
+    } catch (error) {
+      if (providersRequestId !== requestId) return;
+      renderProvidersMessage('Could not load watch providers.');
+    }
+  }
+
+  window.loadMovieProviders = loadMovieProviders;
+  window.prepareMovieProviders = prepareMovieProviders;
+
   function updateWatchedToggle() {
     if (!watchedToggle) return;
     const isAuthed = Boolean(currentUser);
@@ -4203,6 +4499,9 @@
 
   function setCurrentMovieId(movieId) {
     currentMovieId = movieId;
+    if (!movieId) {
+      currentMovieData = null;
+    }
     updateWatchedToggle();
   }
 
@@ -4328,6 +4627,9 @@
       userDropdownName.textContent = user.displayName || 'User';
       userEmail.textContent = user.email;
       userAvatar.src = user.photoURL || 'https://via.placeholder.com/32';
+      if (isMovieDetailOpen() && currentMovieData) {
+        prepareMovieProviders(currentMovieData);
+      }
     } else {
       // User is signed out
       console.log('User is not authenticated');
@@ -4337,6 +4639,9 @@
       signInButton.style.display = 'flex';
       userMenu.style.display = 'none';
       updateCountryDisplay(null, null);
+      if (isMovieDetailOpen() && currentMovieData) {
+        prepareMovieProviders(currentMovieData);
+      }
       if (userCountrySelect) {
         userCountrySelect.innerHTML = '';
       }
@@ -4368,6 +4673,9 @@
         }, { merge: true });
         updateCountryDisplay(countryCode, countryName);
         userCountrySelect.classList.add('is-hidden');
+        if (isMovieDetailOpen() && currentMovieData && providersExpanded) {
+          loadMovieProviders(currentMovieData);
+        }
       } catch (error) {
         console.error('Country update error:', error);
         alert('Could not update country. Please try again.');
