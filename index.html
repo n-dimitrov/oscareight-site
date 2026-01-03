@@ -1109,6 +1109,7 @@
             z-index: 2;
         }
 
+
         .wall-control {
             width: 34px;
             height: 34px;
@@ -1197,12 +1198,14 @@
             align-items: center;
             position: relative;
             z-index: 1;
-            padding-bottom: 25px;
+            padding: var(--wall-gap, 10px) 0;
+            box-sizing: border-box;
         }
 
         .wall-column {
             width: var(--wall-poster-width, 120px);
-            height: calc(var(--wall-column-height, 540px) + 25px);
+            height: var(--wall-column-height, 540px);
+            box-sizing: border-box;
             overflow: hidden;
         }
 
@@ -1211,7 +1214,6 @@
             flex-direction: column;
             gap: var(--wall-gap, 10px);
             transform: translateY(var(--wall-column-offset, 0px));
-            height: 100%;
         }
 
         .wall-column-track.is-shuffling {
@@ -1221,6 +1223,7 @@
         .wall-poster {
             width: var(--wall-poster-width, 120px);
             height: var(--wall-poster-height, 180px);
+            display: block;
             object-fit: cover;
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
@@ -2108,6 +2111,7 @@
         let postersWallShuffleTimer = null;
         let postersWallIsShuffling = false;
         let postersWallActiveWrap = null;
+        const postersWallScale = 0.98;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -2590,16 +2594,17 @@
             const contentRect = modalContent ? modalContent.getBoundingClientRect() : null;
             const maxWidth = Math.max(0, (contentRect ? contentRect.width : window.innerWidth) - padding * 2);
             const maxHeight = Math.max(0, (contentRect ? contentRect.height : window.innerHeight) - padding * 2);
+            const availableHeight = Math.max(0, maxHeight - gap * 2);
             const minPosterWidth = isNarrow ? 90 : 110;
             const aspectRatio = 1.5;
             let best = null;
             const maxCols = Math.min(12, Math.max(2, Math.floor((maxWidth + gap) / (minPosterWidth + gap))));
 
             for (let cols = 2; cols <= maxCols; cols += 1) {
-                const posterWidth = (maxWidth - gap * (cols - 1)) / cols;
+                const posterWidth = Math.floor(((maxWidth - gap * (cols - 1)) / cols) * postersWallScale);
                 if (posterWidth < minPosterWidth) continue;
-                const posterHeight = posterWidth * aspectRatio;
-                const rows = Math.floor((maxHeight + gap) / (posterHeight + gap));
+                const posterHeight = Math.floor(posterWidth * aspectRatio);
+                const rows = Math.floor((availableHeight + gap) / (posterHeight + gap));
                 if (rows < 1) continue;
                 const capacity = rows * cols;
                 if (!best || capacity > best.capacity || (capacity === best.capacity && posterWidth > best.posterWidth)) {
@@ -2618,8 +2623,8 @@
                 return best;
             }
 
-            const posterWidth = Math.min(maxWidth, maxHeight / aspectRatio);
-            const posterHeight = posterWidth * aspectRatio;
+            const posterWidth = Math.floor(Math.min(maxWidth, availableHeight / aspectRatio) * postersWallScale);
+            const posterHeight = Math.floor(posterWidth * aspectRatio);
             return {
                 cols: 1,
                 rows: 1,
@@ -2707,8 +2712,7 @@
                 const columns = getPostersWallColumns(selection, layout);
                 grid.innerHTML = columns
                     .map((column) => {
-                        const columnHeight = (layout.posterHeight * column.length) + (layout.gap * (column.length - 1));
-                        const padTop = Math.max(0, (baseColumnHeight + columnBuffer - columnHeight) / 2);
+                        const padTop = 0;
                         return `
                         <div class="wall-column">
                             <div class="wall-column-track" style="--wall-column-offset:${padTop}px;">
@@ -2742,16 +2746,12 @@
                     const nextColumn = nextColumns[index] || [];
                     const delay = index * 120;
                     const currentCount = column.length;
-                    const columnHeight = (layout.posterHeight * currentCount) + (layout.gap * (currentCount - 1));
-                    const padTop = Math.max(0, (baseColumnHeight + columnBuffer - columnHeight) / 2);
+                    const padTop = 0;
                     const shift = currentCount
                         ? (layout.posterHeight * currentCount) + (layout.gap * currentCount) + padTop
                         : 0;
                     const nextCount = nextColumn.length;
-                    const nextColumnHeight = nextCount
-                        ? (layout.posterHeight * nextCount) + (layout.gap * (nextCount - 1))
-                        : 0;
-                    const nextPadTop = Math.max(0, (baseColumnHeight + columnBuffer - nextColumnHeight) / 2);
+                    const nextPadTop = 0;
                     return `
                         <div class="wall-column">
                             <div class="wall-column-track is-shuffling" style="animation-delay:${delay}ms; --wall-column-shift:${shift}px; --wall-column-offset:${padTop}px; --wall-column-offset-start:${padTop}px; --wall-column-offset-end:${nextPadTop}px;">
