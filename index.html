@@ -1229,6 +1229,18 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
         }
 
+        .wall-poster-swap-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .wall-poster-swap-layer.is-swap-in {
+            animation: wallPosterSwapIn 2500ms ease forwards;
+        }
+
         .wall-poster-wrap {
             position: relative;
             outline: none;
@@ -1288,6 +1300,17 @@
             }
             to {
                 transform: translateY(calc(-1 * var(--wall-column-shift, var(--wall-column-height, 540px)) + var(--wall-column-offset-end, var(--wall-column-offset, 0px))));
+            }
+        }
+
+        @keyframes wallPosterSwapIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
@@ -2666,6 +2689,142 @@
             return columns.filter(column => column.length > 0);
         }
 
+        function getCenteredWallColumns(selection, layout) {
+            const count = selection.length;
+            if (count === 0) {
+                return {
+                    columns: Array.from({ length: layout.cols }, () => []),
+                    padTop: 0
+                };
+            }
+
+            const gridAspect = layout.rows / layout.cols;
+            let best = null;
+
+            for (let rows = 1; rows <= layout.rows; rows += 1) {
+                for (let cols = 1; cols <= layout.cols; cols += 1) {
+                    if (rows * cols < count) continue;
+                    const area = rows * cols;
+                    const balance = Math.max(rows / cols, cols / rows);
+                    const skinnyPenalty = (rows === 1 || cols === 1) && count > 4 ? 10 : 0;
+                    const aligns = Math.abs((rows / cols) - gridAspect);
+                    const score = [area, balance, skinnyPenalty, aligns, Math.abs(rows - cols)];
+
+                    if (!best) {
+                        best = { rows, cols, score };
+                        continue;
+                    }
+
+                    const a = score;
+                    const b = best.score;
+                    const better = a[0] < b[0]
+                        || (a[0] === b[0] && a[1] < b[1])
+                        || (a[0] === b[0] && a[1] === b[1] && a[2] < b[2])
+                        || (a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] < b[3])
+                        || (a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3] && a[4] < b[4]);
+
+                    if (better) {
+                        best = { rows, cols, score };
+                    }
+                }
+            }
+
+            const blockRows = best ? best.rows : 1;
+            const blockCols = best ? best.cols : 1;
+            const rowOffset = Math.floor((layout.rows - blockRows) / 2);
+            const colOffset = Math.floor((layout.cols - blockCols) / 2);
+            const padTop = rowOffset * (layout.posterHeight + layout.gap);
+
+            const columns = Array.from({ length: layout.cols }, () => []);
+            let index = 0;
+
+            for (let row = 0; row < blockRows; row += 1) {
+                for (let col = 0; col < blockCols; col += 1) {
+                    if (index >= selection.length) break;
+                    const poster = selection[index];
+                    const targetCol = colOffset + col;
+                    columns[targetCol].push({ poster, slotIndex: index });
+                    index += 1;
+                }
+            }
+
+            return { columns, padTop };
+        }
+
+        function buildPosterMeta(poster) {
+            const info = getPosterAwardsInfo(poster.id);
+            const title = info ? info.title : poster.title || '';
+            const year = info ? info.year : '';
+            const awards = info ? info.awardsLine : '';
+            const star = info && info.isBestPictureNominee;
+            return {
+                title: escapeHtml(title),
+                year: escapeHtml(year),
+                awards: escapeHtml(awards),
+                rawTitle: title,
+                star: star ? 'true' : 'false'
+            };
+        }
+
+        function updateWallPosterWrap(wrap, poster) {
+            const img = wrap.querySelector('.wall-poster');
+            if (!img) return;
+
+            const meta = buildPosterMeta(poster);
+            wrap.dataset.title = meta.title;
+            wrap.dataset.year = meta.year;
+            wrap.dataset.awards = meta.awards;
+            wrap.dataset.star = meta.star;
+            wrap.dataset.movieId = poster.id;
+            img.src = poster.url;
+            img.alt = meta.rawTitle;
+        }
+
+        function animateWallPosterSwap(wrap, poster) {
+            const img = wrap.querySelector('.wall-poster');
+            if (!img) return;
+
+            const meta = buildPosterMeta(poster);
+            const existing = wrap.querySelector('.wall-poster-swap-layer');
+            if (existing) {
+                existing.remove();
+            }
+            const overlay = document.createElement('img');
+            overlay.className = 'wall-poster wall-poster-swap-layer is-swap-in';
+            overlay.src = poster.url;
+            overlay.alt = meta.rawTitle;
+            overlay.loading = 'eager';
+            overlay.decoding = 'async';
+
+            overlay.addEventListener('animationend', () => {
+                updateWallPosterWrap(wrap, poster);
+                overlay.remove();
+            }, { once: true });
+
+            wrap.appendChild(overlay);
+        }
+
+        function performCenteredWallBatchSwap(nextSelection) {
+            const grid = document.getElementById('postersWallGrid');
+            if (!grid) return;
+            const wraps = Array.from(grid.querySelectorAll('.wall-poster-wrap[data-slot-index]'));
+            if (wraps.length === 0 || nextSelection.length === 0) return;
+
+            wraps
+                .sort((a, b) => Number(a.dataset.slotIndex) - Number(b.dataset.slotIndex))
+                .forEach((wrap) => {
+                    const slotIndex = Number(wrap.dataset.slotIndex);
+                    const nextPoster = nextSelection[slotIndex];
+                    if (!nextPoster) return;
+                    if (postersWallActiveWrap === wrap) {
+                        hidePostersWallTooltip();
+                    }
+                    animateWallPosterSwap(wrap, nextPoster);
+                });
+
+            postersWallSelection = nextSelection;
+        }
+
         function preloadWallPosters(selection) {
             if (!selection || selection.length === 0) {
                 return Promise.resolve();
@@ -2699,7 +2858,9 @@
             grid.style.setProperty('--wall-column-height', `${baseColumnHeight + columnBuffer}px`);
 
             const selection = nextSelection || getPostersWallSelection(layout);
+            const isCenteredLayout = selection.length < layout.capacity;
             const canAnimate = animate
+                && !isCenteredLayout
                 && postersWallSelection.length === selection.length
                 && postersWallSelection.length > 0;
 
@@ -2709,21 +2870,27 @@
             }
 
             if (!canAnimate) {
-                const columns = getPostersWallColumns(selection, layout);
+                const { columns, padTop } = isCenteredLayout
+                    ? getCenteredWallColumns(selection, layout)
+                    : { columns: getPostersWallColumns(selection, layout), padTop: 0 };
                 grid.innerHTML = columns
                     .map((column) => {
-                        const padTop = 0;
                         return `
                         <div class="wall-column">
                             <div class="wall-column-track" style="--wall-column-offset:${padTop}px;">
-                                ${column.map(poster => {
+                                ${column.map(entry => {
+                                    const poster = entry.poster || entry;
                                     const info = getPosterAwardsInfo(poster.id);
                                     const title = info ? escapeHtml(info.title) : escapeHtml(poster.title);
                                     const year = info ? escapeHtml(info.year) : '';
                                     const awards = info ? escapeHtml(info.awardsLine) : '';
                                     const star = info && info.isBestPictureNominee;
+                                    const slotIndex = Number.isFinite(entry.slotIndex) ? entry.slotIndex : null;
+                                    const slotAttrs = slotIndex !== null
+                                        ? ` data-slot-index="${slotIndex}" data-movie-id="${poster.id}"`
+                                        : ` data-movie-id="${poster.id}"`;
                                     return `
-                                        <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
+                                        <div class="wall-poster-wrap" tabindex="0"${slotAttrs} data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
                                             <img class="wall-poster" src="${poster.url}" alt="${title}" loading="eager" decoding="async">
                                         </div>
                                     `.trim();
@@ -2921,9 +3088,18 @@
         }
 
         function shufflePostersWall() {
-            if (!postersWallOpen || postersWallIsShuffling) return;
+            if (!postersWallOpen) return;
             const layout = getPosterWallLayout();
             const selection = getPostersWallSelection(layout);
+            if (selection.length < layout.capacity) {
+                preloadWallPosters(selection).then(() => {
+                    if (!postersWallOpen) return;
+                    performCenteredWallBatchSwap(selection);
+                });
+                return;
+            }
+
+            if (postersWallIsShuffling) return;
             postersWallIsShuffling = true;
             preloadWallPosters(selection).then(() => {
                 if (!postersWallOpen) return;
