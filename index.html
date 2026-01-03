@@ -1215,7 +1215,7 @@
         }
 
         .wall-column-track.is-shuffling {
-            animation: wallColumnShuffle 700ms ease-in-out forwards;
+            animation: wallColumnShuffle 2500ms ease-in-out forwards;
         }
 
         .wall-poster {
@@ -2787,7 +2787,7 @@
             setupLazyPosters();
             hidePostersWallTooltip();
 
-            const totalDuration = 700 + (layout.cols - 1) * 120 + 60;
+            const totalDuration = 2500 + (layout.cols - 1) * 120 + 60;
             postersWallShuffleTimer = window.setTimeout(() => {
                 postersWallShuffleTimer = null;
                 renderPostersWall({ animate: false, nextSelection: selection, layoutOverride: layout });
