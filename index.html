@@ -2724,7 +2724,7 @@
                                     const star = info && info.isBestPictureNominee;
                                     return `
                                         <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
-                                            <img class="wall-poster" data-src="${poster.url}" alt="${title}">
+                                            <img class="wall-poster" src="${poster.url}" alt="${title}" loading="eager" decoding="async">
                                         </div>
                                     `.trim();
                                 }).join('')}
@@ -2763,7 +2763,7 @@
                                     const star = info && info.isBestPictureNominee;
                                     return `
                                         <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
-                                            <img class="wall-poster" data-src="${poster.url}" alt="${title}">
+                                            <img class="wall-poster" src="${poster.url}" alt="${title}" loading="eager" decoding="async">
                                         </div>
                                     `.trim();
                                 }).join('')}
@@ -2775,7 +2775,7 @@
                                     const star = info && info.isBestPictureNominee;
                                     return `
                                         <div class="wall-poster-wrap" tabindex="0" data-title="${title}" data-year="${year}" data-awards="${awards}" data-star="${star}">
-                                            <img class="wall-poster" data-src="${poster.url}" alt="${title}">
+                                            <img class="wall-poster" src="${poster.url}" alt="${title}" loading="eager" decoding="async">
                                         </div>
                                     `.trim();
                                 }).join('')}
