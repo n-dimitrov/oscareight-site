@@ -1086,7 +1086,7 @@
         .wall-modal-content {
             width: 100%;
             height: 100%;
-            padding: 26px;
+            padding: 14px;
             position: relative;
             display: flex;
             align-items: center;
@@ -1197,11 +1197,12 @@
             align-items: center;
             position: relative;
             z-index: 1;
+            padding-bottom: 25px;
         }
 
         .wall-column {
             width: var(--wall-poster-width, 120px);
-            height: var(--wall-column-height, 540px);
+            height: calc(var(--wall-column-height, 540px) + 25px);
             overflow: hidden;
         }
 
@@ -1209,14 +1210,12 @@
             display: flex;
             flex-direction: column;
             gap: var(--wall-gap, 10px);
-            transform: translateY(0);
+            transform: translateY(var(--wall-column-offset, 0px));
             height: 100%;
-            justify-content: center;
         }
 
         .wall-column-track.is-shuffling {
-            animation: wallColumnShuffle 700ms ease-in-out forwards;
-            justify-content: flex-start;
+            animation: wallColumnShuffle 2500ms ease-in-out forwards;
         }
 
         .wall-poster {
@@ -1282,10 +1281,10 @@
 
         @keyframes wallColumnShuffle {
             from {
-                transform: translateY(0);
+                transform: translateY(var(--wall-column-offset-start, var(--wall-column-offset, 0px)));
             }
             to {
-                transform: translateY(calc(-1 * var(--wall-column-height, 540px)));
+                transform: translateY(calc(-1 * var(--wall-column-shift, var(--wall-column-height, 540px)) + var(--wall-column-offset-end, var(--wall-column-offset, 0px))));
             }
         }
 
@@ -2584,11 +2583,13 @@
         }
 
         function getPosterWallLayout() {
-            const isNarrow = window.innerWidth < 720;
-            const padding = isNarrow ? 16 : 26;
-            const gap = isNarrow ? 8 : 10;
-            const maxWidth = Math.max(0, window.innerWidth - padding * 2);
-            const maxHeight = Math.max(0, window.innerHeight - padding * 2);
+            const modalContent = document.querySelector('.wall-modal-content');
+            const isNarrow = window.innerWidth <= 980;
+            const padding = isNarrow ? 16 : 14;
+            const gap = isNarrow ? 6 : 8;
+            const contentRect = modalContent ? modalContent.getBoundingClientRect() : null;
+            const maxWidth = Math.max(0, (contentRect ? contentRect.width : window.innerWidth) - padding * 2);
+            const maxHeight = Math.max(0, (contentRect ? contentRect.height : window.innerHeight) - padding * 2);
             const minPosterWidth = isNarrow ? 90 : 110;
             const aspectRatio = 1.5;
             let best = null;
@@ -2673,7 +2674,7 @@
             return Promise.all(promises);
         }
 
-        function renderPostersWall({ animate = false, nextSelection = null } = {}) {
+        function renderPostersWall({ animate = false, nextSelection = null, layoutOverride = null } = {}) {
             const grid = document.getElementById('postersWallGrid');
             if (!grid) return;
             if (latestMovieStats.length === 0) {
@@ -2682,13 +2683,15 @@
                 return;
             }
 
-            const layout = getPosterWallLayout();
+            const layout = layoutOverride || getPosterWallLayout();
             grid.style.setProperty('--wall-cols', layout.cols);
             grid.style.setProperty('--wall-rows', layout.rows);
             grid.style.setProperty('--wall-gap', `${layout.gap}px`);
             grid.style.setProperty('--wall-poster-width', `${layout.posterWidth}px`);
             grid.style.setProperty('--wall-poster-height', `${layout.posterHeight}px`);
-            grid.style.setProperty('--wall-column-height', `${layout.posterHeight * layout.rows + layout.gap * (layout.rows - 1)}px`);
+            const baseColumnHeight = layout.posterHeight * layout.rows + layout.gap * (layout.rows - 1);
+            const columnBuffer = 0;
+            grid.style.setProperty('--wall-column-height', `${baseColumnHeight + columnBuffer}px`);
 
             const selection = nextSelection || getPostersWallSelection(layout);
             const canAnimate = animate
@@ -2703,9 +2706,12 @@
             if (!canAnimate) {
                 const columns = getPostersWallColumns(selection, layout);
                 grid.innerHTML = columns
-                    .map((column) => `
+                    .map((column) => {
+                        const columnHeight = (layout.posterHeight * column.length) + (layout.gap * (column.length - 1));
+                        const padTop = Math.max(0, (baseColumnHeight + columnBuffer - columnHeight) / 2);
+                        return `
                         <div class="wall-column">
-                            <div class="wall-column-track">
+                            <div class="wall-column-track" style="--wall-column-offset:${padTop}px;">
                                 ${column.map(poster => {
                                     const info = getPosterAwardsInfo(poster.id);
                                     const title = info ? escapeHtml(info.title) : escapeHtml(poster.title);
@@ -2720,7 +2726,8 @@
                                 }).join('')}
                             </div>
                         </div>
-                    `.trim())
+                    `.trim();
+                    })
                     .join('');
                 postersWallSelection = selection;
                 setupLazyPosters();
@@ -2734,9 +2741,20 @@
                 .map((column, index) => {
                     const nextColumn = nextColumns[index] || [];
                     const delay = index * 120;
+                    const currentCount = column.length;
+                    const columnHeight = (layout.posterHeight * currentCount) + (layout.gap * (currentCount - 1));
+                    const padTop = Math.max(0, (baseColumnHeight + columnBuffer - columnHeight) / 2);
+                    const shift = currentCount
+                        ? (layout.posterHeight * currentCount) + (layout.gap * currentCount) + padTop
+                        : 0;
+                    const nextCount = nextColumn.length;
+                    const nextColumnHeight = nextCount
+                        ? (layout.posterHeight * nextCount) + (layout.gap * (nextCount - 1))
+                        : 0;
+                    const nextPadTop = Math.max(0, (baseColumnHeight + columnBuffer - nextColumnHeight) / 2);
                     return `
                         <div class="wall-column">
-                            <div class="wall-column-track is-shuffling" style="animation-delay:${delay}ms">
+                            <div class="wall-column-track is-shuffling" style="animation-delay:${delay}ms; --wall-column-shift:${shift}px; --wall-column-offset:${padTop}px; --wall-column-offset-start:${padTop}px; --wall-column-offset-end:${nextPadTop}px;">
                                 ${column.map(poster => {
                                     const info = getPosterAwardsInfo(poster.id);
                                     const title = info ? escapeHtml(info.title) : escapeHtml(poster.title);
@@ -2769,10 +2787,10 @@
             setupLazyPosters();
             hidePostersWallTooltip();
 
-            const totalDuration = 700 + (layout.cols - 1) * 120 + 60;
+            const totalDuration = 2500 + (layout.cols - 1) * 120 + 60;
             postersWallShuffleTimer = window.setTimeout(() => {
                 postersWallShuffleTimer = null;
-                renderPostersWall({ animate: false, nextSelection: selection });
+                renderPostersWall({ animate: false, nextSelection: selection, layoutOverride: layout });
             }, totalDuration);
         }
 
@@ -2909,7 +2927,7 @@
             postersWallIsShuffling = true;
             preloadWallPosters(selection).then(() => {
                 if (!postersWallOpen) return;
-                renderPostersWall({ animate: true, nextSelection: selection });
+                renderPostersWall({ animate: true, nextSelection: selection, layoutOverride: layout });
             }).finally(() => {
                 postersWallIsShuffling = false;
             });
