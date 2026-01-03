@@ -223,6 +223,44 @@
             color: var(--ink);
         }
 
+        .country-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: default;
+        }
+
+        .country-toggle {
+            border: 1px solid rgba(13, 19, 33, 0.2);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--ink);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .country-toggle:hover {
+            border-color: var(--gold-deep);
+        }
+
+        .country-select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(13, 19, 33, 0.2);
+            font-family: var(--body-font);
+            font-size: 0.9em;
+            color: var(--ink);
+            background: #fff;
+        }
+
+        .country-select.is-hidden {
+            display: none;
+        }
+
         .dropdown-item:hover {
             background-color: rgba(242, 196, 104, 0.15);
         }
@@ -1910,6 +1948,13 @@
                 <div id="userDropdown" class="user-dropdown">
                     <div class="dropdown-item" style="font-weight: 600;" id="userDropdownName"></div>
                     <div class="dropdown-item" style="font-weight: 600;" id="userEmail"></div>
+                    <div class="dropdown-item country-row" style="font-weight: 600;">
+                        <span id="userCountry"></span>
+                        <button id="userCountryToggle" class="country-toggle" type="button">Change</button>
+                    </div>
+                    <div class="dropdown-item">
+                        <select id="userCountrySelect" class="country-select is-hidden" aria-label="Select country"></select>
+                    </div>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" id="signOutButton">Sign out</button>
                 </div>
@@ -3907,6 +3952,7 @@
 <script type="module">
   // Import Firebase SDK
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import { countries, countryByCode } from "./countries.js";
   import { 
     getAuth, 
     GoogleAuthProvider, 
@@ -3917,6 +3963,7 @@
   import {
     getFirestore,
     collection,
+    getDoc,
     getDocs,
     doc,
     setDoc,
@@ -3949,6 +3996,9 @@
   const userEmail = document.getElementById('userEmail');
   const userAvatar = document.getElementById('userAvatar');
   const userDropdownName = document.getElementById('userDropdownName');
+  const userCountry = document.getElementById('userCountry');
+  const userCountrySelect = document.getElementById('userCountrySelect');
+  const userCountryToggle = document.getElementById('userCountryToggle');
   const authModal = document.getElementById('authModal');
   const closeAuthModal = document.getElementById('closeAuthModal');
   const googleSignInButton = document.getElementById('googleSignInButton');
@@ -3958,6 +4008,167 @@
   let currentUser = null;
   let watchedIds = new Set();
   let currentMovieId = null;
+
+  function updateCountryDisplay(code, name, suffix = '') {
+    if (!userCountry) return;
+    if (!code || !name) {
+      userCountry.textContent = 'Not set';
+      return;
+    }
+    userCountry.textContent = `${name} (${code})${suffix}`;
+  }
+
+  function populateCountrySelect(selectedCode) {
+    if (!userCountrySelect) return;
+    userCountrySelect.innerHTML = '';
+    userCountrySelect.classList.add('is-hidden');
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select country...';
+    userCountrySelect.appendChild(placeholder);
+    countries.forEach((country) => {
+      const option = document.createElement('option');
+      option.value = country.code;
+      option.textContent = `${country.name} (${country.code})`;
+      if (selectedCode && country.code === selectedCode) {
+        option.selected = true;
+      }
+      userCountrySelect.appendChild(option);
+    });
+  }
+
+  function getCountryFromTimeZone() {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const map = {
+      'Europe/Sofia': 'BG',
+      'Europe/London': 'GB',
+      'Europe/Paris': 'FR',
+      'Europe/Berlin': 'DE',
+      'Europe/Rome': 'IT',
+      'Europe/Madrid': 'ES',
+      'Europe/Amsterdam': 'NL',
+      'Europe/Brussels': 'BE',
+      'Europe/Prague': 'CZ',
+      'Europe/Warsaw': 'PL',
+      'Europe/Vienna': 'AT',
+      'Europe/Zurich': 'CH',
+      'Europe/Stockholm': 'SE',
+      'Europe/Oslo': 'NO',
+      'Europe/Copenhagen': 'DK',
+      'Europe/Helsinki': 'FI',
+      'Europe/Bucharest': 'RO',
+      'Europe/Athens': 'GR',
+      'Europe/Belgrade': 'RS',
+      'Europe/Istanbul': 'TR',
+      'Europe/Kiev': 'UA',
+      'Europe/Kyiv': 'UA',
+      'Europe/Moscow': 'RU',
+      'America/New_York': 'US',
+      'America/Chicago': 'US',
+      'America/Denver': 'US',
+      'America/Los_Angeles': 'US',
+      'America/Phoenix': 'US',
+      'America/Toronto': 'CA',
+      'America/Vancouver': 'CA',
+      'America/Montreal': 'CA',
+      'America/Halifax': 'CA',
+      'America/Winnipeg': 'CA',
+      'America/Edmonton': 'CA',
+      'America/Calgary': 'CA',
+      'America/Mexico_City': 'MX',
+      'America/Sao_Paulo': 'BR',
+      'America/Buenos_Aires': 'AR',
+      'America/Lima': 'PE',
+      'America/Santiago': 'CL',
+      'America/Bogota': 'CO',
+      'Asia/Tokyo': 'JP',
+      'Asia/Seoul': 'KR',
+      'Asia/Shanghai': 'CN',
+      'Asia/Hong_Kong': 'HK',
+      'Asia/Singapore': 'SG',
+      'Asia/Kolkata': 'IN',
+      'Asia/Dubai': 'AE',
+      'Asia/Manila': 'PH',
+      'Asia/Bangkok': 'TH',
+      'Asia/Jakarta': 'ID',
+      'Asia/Taipei': 'TW',
+      'Asia/Kuala_Lumpur': 'MY',
+      'Australia/Sydney': 'AU',
+      'Australia/Melbourne': 'AU',
+      'Australia/Brisbane': 'AU',
+      'Australia/Perth': 'AU',
+      'Australia/Adelaide': 'AU',
+      'Australia/Darwin': 'AU',
+      'Pacific/Auckland': 'NZ',
+      'Africa/Johannesburg': 'ZA',
+      'Africa/Cairo': 'EG',
+      'Africa/Nairobi': 'KE',
+      'Africa/Lagos': 'NG',
+      'Africa/Casablanca': 'MA'
+    };
+    return map[timeZone] || null;
+  }
+
+  function getCountryFromLocale() {
+    const locale = navigator.language || (navigator.languages && navigator.languages[0]) || '';
+    const parts = locale.split('-');
+    if (parts.length >= 2) {
+      const region = parts[1].toUpperCase();
+      if (/^[A-Z]{2}$/.test(region)) return region;
+    }
+    return getCountryFromTimeZone();
+  }
+
+  async function ensureUserCountry(user) {
+    if (!user) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const snapshot = await getDoc(userRef);
+      const existing = snapshot.exists() ? snapshot.data() : null;
+      if (existing && existing.countryCode && existing.countryName) return;
+      const legacyCode = existing && existing.country ? existing.country : null;
+      const countryCode = legacyCode || getCountryFromLocale();
+      if (!countryCode) return;
+      const countryName = countryByCode.get(countryCode);
+      if (!countryName) return;
+      await setDoc(userRef, {
+        countryCode,
+        countryName,
+        countrySource: 'locale',
+        countryUpdatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (error) {
+      console.error('Country save error:', error);
+    }
+  }
+
+  async function loadUserCountry(user) {
+    if (!user || !userCountry) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const snapshot = await getDoc(userRef);
+      const data = snapshot.exists() ? snapshot.data() : null;
+      const storedCode = data && (data.countryCode || data.country) ? (data.countryCode || data.country) : null;
+      const storedName = data && data.countryName ? data.countryName : null;
+      const detectedCode = getCountryFromLocale();
+      const detectedName = detectedCode ? countryByCode.get(detectedCode) : null;
+      const normalizedStoredName = storedCode ? (storedName || countryByCode.get(storedCode)) : null;
+      if (storedCode && normalizedStoredName) {
+        updateCountryDisplay(storedCode, normalizedStoredName);
+        populateCountrySelect(storedCode);
+      } else if (detectedCode && detectedName) {
+        updateCountryDisplay(detectedCode, detectedName, ' (auto)');
+        populateCountrySelect(detectedCode);
+      } else {
+        updateCountryDisplay(null, null);
+        populateCountrySelect('');
+      }
+    } catch (error) {
+      console.error('Country load error:', error);
+      updateCountryDisplay(null, null);
+      populateCountrySelect('');
+    }
+  }
 
   function updateWatchedToggle() {
     if (!watchedToggle) return;
@@ -4103,11 +4314,13 @@
   });
 
   // Listen for authentication state changes
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       // User is signed in
       console.log('User is authenticated:', user.displayName);
       currentUser = user;
+      await ensureUserCountry(user);
+      await loadUserCountry(user);
       loadWatchedIds(user);
       signInButton.style.display = 'none';
       userMenu.style.display = 'block';
@@ -4123,11 +4336,53 @@
       updateWatchedToggle();
       signInButton.style.display = 'flex';
       userMenu.style.display = 'none';
+      updateCountryDisplay(null, null);
+      if (userCountrySelect) {
+        userCountrySelect.innerHTML = '';
+      }
       if (window.updateResultsCount) {
         window.updateResultsCount();
       }
     }
   });
+
+  if (userCountrySelect) {
+    userCountrySelect.addEventListener('change', async (event) => {
+      if (!currentUser) {
+        authModal.classList.add('show');
+        return;
+      }
+      const countryCode = event.target.value;
+      const countryName = countryByCode.get(countryCode);
+      if (!countryCode || !countryName) {
+        updateCountryDisplay(null, null);
+        return;
+      }
+      try {
+        const userRef = doc(db, 'users', currentUser.uid);
+        await setDoc(userRef, {
+          countryCode,
+          countryName,
+          countrySource: 'manual',
+          countryUpdatedAt: new Date().toISOString()
+        }, { merge: true });
+        updateCountryDisplay(countryCode, countryName);
+        userCountrySelect.classList.add('is-hidden');
+      } catch (error) {
+        console.error('Country update error:', error);
+        alert('Could not update country. Please try again.');
+      }
+    });
+  }
+
+  if (userCountryToggle && userCountrySelect) {
+    userCountryToggle.addEventListener('click', () => {
+      userCountrySelect.classList.toggle('is-hidden');
+      if (!userCountrySelect.classList.contains('is-hidden')) {
+        userCountrySelect.focus();
+      }
+    });
+  }
 </script>
 </body>
 </html>
