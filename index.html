@@ -1102,7 +1102,7 @@
             border-radius: 20px;
             padding: 22px;
             width: min(720px, 92vw);
-            height: min(80vh, 92vh);
+            max-height: 80vh;
             box-shadow: var(--shadow);
             border: var(--card-border);
             display: flex;
@@ -3819,6 +3819,9 @@
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
+            
+            // Reset scroll position to top
+            tableHost.scrollTop = 0;
         }
 
         function closeMoviesModal() {
