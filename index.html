@@ -1604,7 +1604,7 @@
         .badge-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, 160px);
-            justify-content: start;
+            justify-content: center;
             gap: 10px;
             padding-right: 4px;
         }
@@ -1668,7 +1668,11 @@
             color: var(--ink);
             font-size: 0.75em;
             line-height: 1.2;
-            margin-top: auto;
+            height: 2.4em; /* Fixed height for 2 lines (2 × 1.2em line-height) */
+            display: flex;
+            align-items: flex-end; /* Align text to bottom */
+            justify-content: center;
+            text-align: center;
         }
 
         .badge-header {
@@ -1775,6 +1779,59 @@
             border-radius: 10px;
             border: 1px dashed rgba(13, 19, 33, 0.1);
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .modal-card.badge-modal-card {
+                width: min(100vw, 480px) !important;
+                padding: 14px !important;
+            }
+
+            .badge-grid {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 4px;
+                gap: 6px;
+            }
+
+            .badge-card {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+                padding: 4px;
+                gap: 2px;
+            }
+
+            .badge-placeholder {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            .badge-ring {
+                width: 60px;
+                height: 60px;
+            }
+
+            .badge-ring svg {
+                width: 60px;
+                height: 60px;
+            }
+
+            .badge-period {
+                font-size: 1em;
+            }
+
+            .badge-title {
+                font-size: 0.6em;
+            }
+
+            .badge-subtitle {
+                font-size: 0.55em;
+            }
+
+            .badge-count {
+                font-size: 0.65em;
+            }
         }
 
         .badge-progress {
@@ -2577,7 +2634,8 @@
                     <label class="badge-filter-label" for="badgeStatusFilter">Status</label>
                     <select id="badgeStatusFilter" class="badge-filter-select">
                         <option value="all">All</option>
-                        <option value="earned">Earned</option>
+                        <option value="earned" selected>Earned</option>
+                        <option value="almost-done">One Away</option>
                         <option value="in-progress">In Progress</option>
                         <option value="locked">Locked</option>
                     </select>
@@ -4545,7 +4603,7 @@
   let currentMovieData = null;
   let providersRequestId = 0;
   let badgeFilters = {
-    status: 'all',
+    status: 'earned',
     type: 'all',
     variant: 'all'
   };
@@ -5115,7 +5173,14 @@
       if (badgeFilters.status !== 'all') {
         if (badgeFilters.status === 'earned' && !progress.isComplete) return false;
         if (badgeFilters.status === 'locked' && progress.watchedCount > 0) return false;
-        if (badgeFilters.status === 'in-progress' && (progress.watchedCount === 0 || progress.isComplete)) return false;
+        if (badgeFilters.status === 'almost-done') {
+          const remaining = progress.totalCount - progress.watchedCount;
+          if (remaining !== 1) return false;
+        }
+        if (badgeFilters.status === 'in-progress') {
+          const remaining = progress.totalCount - progress.watchedCount;
+          if (progress.watchedCount === 0 || progress.isComplete || remaining === 1) return false;
+        }
       }
       
       // Type filter
@@ -5192,7 +5257,23 @@
 
   function openBadgesModal() {
     if (!badgesModal) return;
+    // Reset filters to default
+    badgeFilters = {
+      status: 'earned',
+      type: 'all',
+      variant: 'all'
+    };
+    // Update filter dropdowns
+    const statusFilter = document.getElementById('badgeStatusFilter');
+    const typeFilter = document.getElementById('badgeTypeFilter');
+    const variantFilter = document.getElementById('badgeVariantFilter');
+    if (statusFilter) statusFilter.value = 'earned';
+    if (typeFilter) typeFilter.value = 'all';
+    if (variantFilter) variantFilter.value = 'all';
     renderBadges();
+    // Reset scroll position to top
+    const badgeBody = badgesModal.querySelector('.badge-body');
+    if (badgeBody) badgeBody.scrollTop = 0;
     badgesModal.classList.add('is-open');
     badgesModal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
