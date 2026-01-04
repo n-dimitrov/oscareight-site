@@ -1102,7 +1102,7 @@
             border-radius: 20px;
             padding: 22px;
             width: min(720px, 92vw);
-            height: min(80vh, 92vh);
+            max-height: 80vh;
             box-shadow: var(--shadow);
             border: var(--card-border);
             display: flex;
@@ -1406,6 +1406,10 @@
         }
 
         .modal-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
             width: 34px;
             height: 34px;
             border-radius: 50%;
@@ -1619,6 +1623,7 @@
             gap: 18px;
             overflow: auto;
             animation: rise 0.3s ease;
+            position: relative;
         }
 
         .detail-poster {
@@ -1858,9 +1863,10 @@
         }
 
         .detail-close {
-            position: absolute;
-            top: 18px;
+            position: fixed;
+            top: 20px;
             right: 20px;
+            z-index: 10;
             width: 34px;
             height: 34px;
             border-radius: 50%;
@@ -2241,6 +2247,12 @@
     </div>
 
     <div id="moviesModal" class="modal" aria-hidden="true">
+        <button class="modal-close" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="6" y1="18" x2="18" y2="6"></line>
+            </svg>
+        </button>
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="moviesModalTitle">
             <div class="modal-header">
                 <div class="modal-header-content">
@@ -2250,12 +2262,6 @@
                         <span class="count-pill">0 N</span>
                     </div>
                 </div>
-                <button class="modal-close" type="button" aria-label="Close">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                        <line x1="6" y1="18" x2="18" y2="6"></line>
-                    </svg>
-                </button>
             </div>
             <div class="modal-body">
                 <div id="letterRail" class="letter-rail" aria-label="Movie index"></div>
@@ -2265,13 +2271,13 @@
     </div>
 
     <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
+        <button class="detail-close" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="6" y1="18" x2="18" y2="6"></line>
+            </svg>
+        </button>
         <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="movieDetailTitle">
-            <button class="detail-close" type="button" aria-label="Close">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                    <line x1="6" y1="18" x2="18" y2="6"></line>
-                </svg>
-            </button>
             <img id="movieDetailPoster" class="detail-poster" alt="">
             <div>
                 <div class="detail-title-row">
@@ -3813,6 +3819,9 @@
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
+            
+            // Reset scroll position to top
+            tableHost.scrollTop = 0;
         }
 
         function closeMoviesModal() {
@@ -3932,6 +3941,10 @@
             }
 
             const modal = document.getElementById('movieDetailModal');
+            const detailCard = modal.querySelector('.detail-card');
+            if (detailCard) {
+                detailCard.scrollTop = 0;
+            }
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
