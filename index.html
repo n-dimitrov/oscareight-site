@@ -3938,6 +3938,10 @@
             }
 
             const modal = document.getElementById('movieDetailModal');
+            const detailCard = modal.querySelector('.detail-card');
+            if (detailCard) {
+                detailCard.scrollTop = 0;
+            }
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
