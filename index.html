@@ -1530,6 +1530,348 @@
             border-top: 1px solid rgba(13, 19, 33, 0.08);
         }
 
+        .modal-card.badge-modal-card {
+            width: min(1080px, 92vw) !important;
+            height: auto;
+            max-height: 80vh;
+        }
+
+        .badge-body {
+            display: block;
+            overflow: auto;
+            padding-right: 6px;
+        }
+
+        .badge-summary {
+            font-size: 0.9em;
+            color: var(--ink-soft);
+            margin-left: auto;
+        }
+
+        .badge-filters {
+            display: flex;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(13, 19, 33, 0.08);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .badge-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .badge-filter-label {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+            font-weight: 600;
+        }
+
+        .badge-filter-select {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--ink);
+            font-size: 0.85em;
+            font-family: var(--body-font);
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .badge-filter-select:hover {
+            border-color: rgba(13, 19, 33, 0.24);
+        }
+
+        .badge-filter-select:focus {
+            outline: none;
+            border-color: var(--gold-deep);
+        }
+
+        .badge-filter-count {
+            font-size: 0.8em;
+            color: var(--ink-soft);
+            margin-left: auto;
+            padding: 4px 10px;
+            background: rgba(13, 19, 33, 0.05);
+            border-radius: 12px;
+        }
+
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 160px);
+            justify-content: center;
+            gap: 10px;
+            padding-right: 4px;
+        }
+
+        .badge-card {
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 14px rgba(13, 19, 33, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            width: 160px;
+            height: 160px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .badge-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(13, 19, 33, 0.12);
+        }
+
+        .badge-card.is-locked {
+            opacity: 0.65;
+            background: rgba(245, 240, 230, 0.5);
+        }
+
+        .badge-card.is-locked:hover {
+            transform: none;
+            box-shadow: 0 6px 14px rgba(13, 19, 33, 0.08);
+        }
+
+        .badge-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(140deg, rgba(242, 196, 104, 0.25), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .badge-card.is-earned {
+            border-color: rgba(242, 196, 104, 0.4);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .badge-card.is-earned::before {
+            opacity: 1;
+        }
+
+        .badge-card.is-earned:hover::before {
+            opacity: 0.85;
+        }
+
+        .badge-title {
+            font-weight: 700;
+            color: var(--ink);
+            font-size: 0.75em;
+            line-height: 1.2;
+            height: 2.4em; /* Fixed height for 2 lines (2 × 1.2em line-height) */
+            display: flex;
+            align-items: flex-end; /* Align text to bottom */
+            justify-content: center;
+            text-align: center;
+        }
+
+        .badge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .badge-subtitle {
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            color: var(--ink-soft);
+            opacity: 0.8;
+            text-align: left;
+        }
+
+        .badge-count {
+            font-size: 0.7em;
+            font-weight: 700;
+            color: var(--ink);
+            background: rgba(13, 19, 33, 0.06);
+            padding: 2px 6px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .badge-card.is-earned .badge-count {
+            background: rgba(242, 196, 104, 0.3);
+            color: var(--gold-deep);
+        }
+
+        .badge-ring-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 80px;
+        }
+
+        .badge-ring {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .badge-ring svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .badge-ring-bg {
+            fill: none;
+            stroke: rgba(13, 19, 33, 0.08);
+            stroke-width: 4;
+        }
+
+        .badge-ring-progress {
+            fill: none;
+            stroke: #6b7a8f; /* grayish-blue for in-progress (previous: var(--teal) = #1f6f6a) */
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease;
+        }
+
+        .badge-card.is-locked .badge-ring-progress {
+            stroke: rgba(13, 19, 33, 0.15);
+        }
+
+        .badge-card.is-earned .badge-ring-progress {
+            stroke: var(--gold-deep);
+            filter: drop-shadow(0 0 3px rgba(242, 196, 104, 0.6));
+        }
+
+        .badge-period {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #6b7a8f; /* grayish-blue for in-progress (previous: var(--teal) = #1f6f6a) */
+            line-height: 1;
+            font-family: var(--title-font);
+            transition: color 0.3s ease;
+        }
+
+        .badge-card.is-locked .badge-period {
+            color: var(--ink-soft);
+            opacity: 0.5;
+        }
+
+        .badge-card.is-earned .badge-period {
+            color: var(--gold-deep);
+        }
+
+        .badge-placeholder {
+            width: 160px;
+            height: 160px;
+            border-radius: 10px;
+            border: 1px dashed rgba(13, 19, 33, 0.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .modal-card.badge-modal-card {
+                width: min(100vw, 480px) !important;
+                padding: 14px !important;
+            }
+
+            .badge-grid {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 4px;
+                gap: 6px;
+            }
+
+            .badge-card {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+                padding: 4px;
+                gap: 2px;
+            }
+
+            .badge-placeholder {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            .badge-ring {
+                width: 60px;
+                height: 60px;
+            }
+
+            .badge-ring svg {
+                width: 60px;
+                height: 60px;
+            }
+
+            .badge-period {
+                font-size: 1em;
+            }
+
+            .badge-title {
+                font-size: 0.6em;
+            }
+
+            .badge-subtitle {
+                font-size: 0.55em;
+            }
+
+            .badge-count {
+                font-size: 0.65em;
+            }
+        }
+
+        .badge-progress {
+            font-size: 0.82em;
+            color: var(--ink-soft);
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+            color: var(--ink-soft);
+            padding: 3px 8px;
+            border-radius: 14px;
+            background: rgba(13, 19, 33, 0.05);
+            margin-top: auto;
+        }
+
+        .badge-status::before {
+            content: "";
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-card.is-earned .badge-status {
+            color: #8a5a11;
+            background: rgba(242, 196, 104, 0.25);
+        }
+
+        .badge-card.is-earned .badge-status::before {
+            background: var(--gold-deep);
+        }
+
         .sort-button {
             background: none;
             border: none;
@@ -2136,6 +2478,8 @@
                         <select id="userCountrySelect" class="country-select is-hidden" aria-label="Select country"></select>
                     </div>
                     <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" id="badgesButton">Badges</button>
+                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" id="signOutButton">Sign out</button>
                 </div>
             </div>
@@ -2267,6 +2611,55 @@
             <div class="modal-body">
                 <div id="letterRail" class="letter-rail" aria-label="Movie index"></div>
                 <div id="moviesTable" class="modal-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="badgesModal" class="modal" aria-hidden="true">
+        <button class="modal-close" id="badgesClose" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="6" y1="18" x2="18" y2="6"></line>
+            </svg>
+        </button>
+        <div class="modal-card badge-modal-card" role="dialog" aria-modal="true" aria-labelledby="badgesModalTitle">
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <div id="badgesModalTitle" class="modal-title">Badges</div>
+                    <div id="badgesSummary" class="badge-summary"></div>
+                </div>
+            </div>
+            <div class="badge-filters">
+                <div class="badge-filter-group">
+                    <label class="badge-filter-label" for="badgeStatusFilter">Status</label>
+                    <select id="badgeStatusFilter" class="badge-filter-select">
+                        <option value="all">All</option>
+                        <option value="earned" selected>Earned</option>
+                        <option value="almost-done">One Away</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="locked">Locked</option>
+                    </select>
+                </div>
+                <div class="badge-filter-group">
+                    <label class="badge-filter-label" for="badgeTypeFilter">Type</label>
+                    <select id="badgeTypeFilter" class="badge-filter-select">
+                        <option value="all">All</option>
+                        <option value="big8">Big 8 Complete</option>
+                        <option value="category-decade">Category Masters</option>
+                    </select>
+                </div>
+                <div class="badge-filter-group">
+                    <label class="badge-filter-label" for="badgeVariantFilter">Variant</label>
+                    <select id="badgeVariantFilter" class="badge-filter-select">
+                        <option value="all">All</option>
+                        <option value="winners">Winners</option>
+                        <option value="all-nominees">Nominees</option>
+                    </select>
+                </div>
+                <div id="badgeFilterCount" class="badge-filter-count"></div>
+            </div>
+            <div class="modal-body badge-body">
+                <div id="badgesGrid" class="badge-grid"></div>
             </div>
         </div>
     </div>
@@ -2687,6 +3080,7 @@
                     closeMoviesModal();
                     closeMovieDetail();
                     closePostersWall();
+                    closeBadgesModal();
                 }
             });
 
@@ -4189,6 +4583,15 @@
   const authModal = document.getElementById('authModal');
   const closeAuthModal = document.getElementById('closeAuthModal');
   const googleSignInButton = document.getElementById('googleSignInButton');
+  const badgesButton = document.getElementById('badgesButton');
+  const badgesModal = document.getElementById('badgesModal');
+  const badgesClose = document.getElementById('badgesClose');
+  const badgesGrid = document.getElementById('badgesGrid');
+  const badgesSummary = document.getElementById('badgesSummary');
+  const badgeStatusFilter = document.getElementById('badgeStatusFilter');
+  const badgeTypeFilter = document.getElementById('badgeTypeFilter');
+  const badgeVariantFilter = document.getElementById('badgeVariantFilter');
+  const badgeFilterCount = document.getElementById('badgeFilterCount');
   const watchedLabel = document.getElementById('watchedLabel');
   const watchedToggle = document.getElementById('watchedToggle');
   const movieDetailProviders = document.getElementById('movieDetailProviders');
@@ -4199,10 +4602,98 @@
   let currentMovieId = null;
   let currentMovieData = null;
   let providersRequestId = 0;
+  let badgeFilters = {
+    status: 'earned',
+    type: 'all',
+    variant: 'all'
+  };
   const watchProvidersCache = new Map();
   let providersToggle = null;
   let providersContent = null;
   let providersExpanded = false;
+
+  // Badge generation rules
+  function generateBadgeDefinitions() {
+    const badges = [];
+    const years = Object.keys(oscarsData).map(Number).sort((a, b) => a - b);
+    const minYear = years[0];
+    const maxYear = years[years.length - 1];
+
+    // Rule 1: Big 8 Complete per year (all years from min to max)
+    for (let year = minYear; year <= maxYear; year++) {
+      if (oscarsData[year]) {
+        // Winners only
+        badges.push({
+          id: `big8-${year}-winners`,
+          title: 'Big 8 Complete',
+          subtitle: 'Winners',
+          type: 'big8',
+          year: year,
+          periodLabel: String(year),
+          includeNominees: false
+        });
+        // All nominees
+        badges.push({
+          id: `big8-${year}-all`,
+          title: 'Big 8 Complete',
+          subtitle: 'Nominees',
+          type: 'big8',
+          year: year,
+          periodLabel: String(year),
+          includeNominees: true
+        });
+      }
+    }
+
+    // Rule 2: Category Master per decade (all decades from min to max, all 8 categories)
+    const categoryBadgeNames = {
+      'Best Picture': 'Best Picture Master',
+      'Best Director': 'Best Director Master',
+      'Best Actor': 'Best Actor Master',
+      'Best Actress': 'Best Actress Master',
+      'Best Supporting Actor': 'Best Supporting Actor Master',
+      'Best Supporting Actress': 'Best Supporting Actress Master',
+      'Best Original Screenplay': 'Best Original Screenplay Master',
+      'Best Adapted Screenplay': 'Best Adapted Screenplay Master'
+    };
+
+    const minDecade = Math.floor(minYear / 10) * 10;
+    const maxDecade = Math.floor(maxYear / 10) * 10;
+
+    for (let decadeStart = minDecade; decadeStart <= maxDecade; decadeStart += 10) {
+      categoryOrder.forEach(category => {
+        const categoryKey = category.toLowerCase().replace(/\s+/g, '-');
+        const decadeLabel = `${decadeStart}s`;
+        
+        // Winners only
+        badges.push({
+          id: `${categoryKey}-${decadeStart}s-winners`,
+          title: categoryBadgeNames[category],
+          subtitle: 'Winners',
+          type: 'category-decade',
+          category: category,
+          decadeStart: decadeStart,
+          periodLabel: decadeLabel,
+          includeNominees: false
+        });
+        // All nominees
+        badges.push({
+          id: `${categoryKey}-${decadeStart}s-all`,
+          title: categoryBadgeNames[category],
+          subtitle: 'Nominees',
+          type: 'category-decade',
+          category: category,
+          decadeStart: decadeStart,
+          periodLabel: decadeLabel,
+          includeNominees: true
+        });
+      });
+    }
+
+    return badges;
+  }
+
+  const badgeDefinitions = generateBadgeDefinitions();
 
   function updateCountryDisplay(code, name, suffix = '') {
     if (!userCountry) return;
@@ -4567,6 +5058,234 @@
   window.loadMovieProviders = loadMovieProviders;
   window.prepareMovieProviders = prepareMovieProviders;
 
+  function getBig8YearMovieIds(year, includeNominees) {
+    const yearData = oscarsData[year];
+    if (!yearData) return [];
+    const ids = new Set();
+    categoryOrder.forEach((category) => {
+      const categoryData = yearData[category];
+      if (!categoryData) return;
+      if (categoryData.winner && categoryData.winner.id) {
+        ids.add(categoryData.winner.id);
+      }
+      if (includeNominees && Array.isArray(categoryData.nominees)) {
+        categoryData.nominees.forEach((nominee) => {
+          if (nominee && nominee.id) {
+            ids.add(nominee.id);
+          }
+        });
+      }
+    });
+    return Array.from(ids);
+  }
+
+  function getBestPictureDecadeMovieIds(decadeStart, includeNominees) {
+    const ids = new Set();
+    const endYear = decadeStart + 9;
+    for (let year = decadeStart; year <= endYear; year += 1) {
+      const yearData = oscarsData[year];
+      if (!yearData) continue;
+      const categoryData = yearData['Best Picture'];
+      if (!categoryData) continue;
+      if (categoryData.winner && categoryData.winner.id) {
+        ids.add(categoryData.winner.id);
+      }
+      if (includeNominees && Array.isArray(categoryData.nominees)) {
+        categoryData.nominees.forEach((nominee) => {
+          if (nominee && nominee.id) {
+            ids.add(nominee.id);
+          }
+        });
+      }
+    }
+    return Array.from(ids);
+  }
+
+  function getCategoryDecadeMovieIds(category, decadeStart, includeNominees) {
+    const ids = new Set();
+    const endYear = decadeStart + 9;
+    for (let year = decadeStart; year <= endYear; year += 1) {
+      const yearData = oscarsData[year];
+      if (!yearData) continue;
+      const categoryData = yearData[category];
+      if (!categoryData) continue;
+      if (categoryData.winner && categoryData.winner.id) {
+        ids.add(categoryData.winner.id);
+      }
+      if (includeNominees && Array.isArray(categoryData.nominees)) {
+        categoryData.nominees.forEach((nominee) => {
+          if (nominee && nominee.id) {
+            ids.add(nominee.id);
+          }
+        });
+      }
+    }
+    return Array.from(ids);
+  }
+
+  function getBadgeTargetIds(badge) {
+    if (badge.type === 'big8') {
+      return getBig8YearMovieIds(badge.year, badge.includeNominees);
+    }
+    if (badge.type === 'best-picture-decade') {
+      return getBestPictureDecadeMovieIds(badge.decadeStart, badge.includeNominees);
+    }
+    if (badge.type === 'category-decade') {
+      return getCategoryDecadeMovieIds(badge.category, badge.decadeStart, badge.includeNominees);
+    }
+    return [];
+  }
+
+  function getBadgeProgress(badge) {
+    const ids = getBadgeTargetIds(badge);
+    let watchedCount = 0;
+    ids.forEach((id) => {
+      if (watchedIds.has(id)) {
+        watchedCount += 1;
+      }
+    });
+    const totalCount = ids.length;
+    return {
+      watchedCount,
+      totalCount,
+      isComplete: totalCount > 0 && watchedCount === totalCount
+    };
+  }
+
+  function renderBadges() {
+    if (!badgesGrid) return;
+    if (!currentUser) {
+      badgesGrid.innerHTML = '<div class="empty-state">Sign in to see your badges.</div>';
+      if (badgesSummary) {
+        badgesSummary.textContent = '';
+      }
+      if (badgeFilterCount) {
+        badgeFilterCount.textContent = '';
+      }
+      return;
+    }
+
+    // Apply filters
+    const filteredBadges = badgeDefinitions.filter((badge) => {
+      const progress = getBadgeProgress(badge);
+      
+      // Status filter
+      if (badgeFilters.status !== 'all') {
+        if (badgeFilters.status === 'earned' && !progress.isComplete) return false;
+        if (badgeFilters.status === 'locked' && progress.watchedCount > 0) return false;
+        if (badgeFilters.status === 'almost-done') {
+          const remaining = progress.totalCount - progress.watchedCount;
+          if (remaining !== 1) return false;
+        }
+        if (badgeFilters.status === 'in-progress') {
+          const remaining = progress.totalCount - progress.watchedCount;
+          if (progress.watchedCount === 0 || progress.isComplete || remaining === 1) return false;
+        }
+      }
+      
+      // Type filter
+      if (badgeFilters.type !== 'all' && badge.type !== badgeFilters.type) return false;
+      
+      // Variant filter
+      if (badgeFilters.variant !== 'all') {
+        if (badgeFilters.variant === 'winners' && badge.includeNominees) return false;
+        if (badgeFilters.variant === 'all-nominees' && !badge.includeNominees) return false;
+      }
+      
+      return true;
+    });
+
+    let earnedCount = 0;
+    const cards = filteredBadges.map((badge) => {
+      const progress = getBadgeProgress(badge);
+      if (progress.isComplete) {
+        earnedCount += 1;
+      }
+      
+      const countLabel = progress.totalCount
+        ? `${progress.watchedCount}/${progress.totalCount}`
+        : '0/0';
+      
+      const percentage = progress.totalCount > 0 
+        ? (progress.watchedCount / progress.totalCount) * 100 
+        : 0;
+      
+      const circumference = 2 * Math.PI * 36; // radius = 36
+      const dashOffset = circumference - (percentage / 100) * circumference;
+      
+      const statusClass = progress.isComplete ? 'is-earned' : (progress.watchedCount > 0 ? 'is-in-progress' : 'is-locked');
+      
+      return `
+        <div class="badge-card ${statusClass}">
+          <div class="badge-header">
+            <div class="badge-subtitle">${badge.subtitle}</div>
+            <div class="badge-count">${countLabel}</div>
+          </div>
+          <div class="badge-ring-container">
+            <div class="badge-ring">
+              <svg viewBox="0 0 80 80">
+                <circle class="badge-ring-bg" cx="40" cy="40" r="36"></circle>
+                <circle class="badge-ring-progress" cx="40" cy="40" r="36"
+                  stroke-dasharray="${circumference}"
+                  stroke-dashoffset="${dashOffset}"></circle>
+              </svg>
+              <div class="badge-period">${badge.periodLabel || ''}</div>
+            </div>
+          </div>
+          <div class="badge-title">${badge.title}</div>
+        </div>
+      `;
+    }).join('');
+    
+    // Add placeholders to fill the last row
+    const badgeCount = filteredBadges.length;
+    const badgesPerRow = Math.floor(1040 / 150); // ~7 badges per row (width + gap)
+    const remainder = badgeCount % badgesPerRow;
+    const placeholdersNeeded = remainder > 0 ? badgesPerRow - remainder : 0;
+    const placeholders = Array(placeholdersNeeded).fill('<div class="badge-placeholder"></div>').join('');
+    
+    badgesGrid.innerHTML = (cards + placeholders) || '<div class="empty-state">No badges match the filters.</div>';
+    
+    if (badgesSummary) {
+      badgesSummary.textContent = `${earnedCount}/${badgeDefinitions.length} earned`;
+    }
+    
+    if (badgeFilterCount) {
+      badgeFilterCount.textContent = `Showing ${filteredBadges.length} of ${badgeDefinitions.length}`;
+    }
+  }
+
+  function openBadgesModal() {
+    if (!badgesModal) return;
+    // Reset filters to default
+    badgeFilters = {
+      status: 'earned',
+      type: 'all',
+      variant: 'all'
+    };
+    // Update filter dropdowns
+    const statusFilter = document.getElementById('badgeStatusFilter');
+    const typeFilter = document.getElementById('badgeTypeFilter');
+    const variantFilter = document.getElementById('badgeVariantFilter');
+    if (statusFilter) statusFilter.value = 'earned';
+    if (typeFilter) typeFilter.value = 'all';
+    if (variantFilter) variantFilter.value = 'all';
+    renderBadges();
+    // Reset scroll position to top
+    const badgeBody = badgesModal.querySelector('.badge-body');
+    if (badgeBody) badgeBody.scrollTop = 0;
+    badgesModal.classList.add('is-open');
+    badgesModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeBadgesModal() {
+    if (!badgesModal || !badgesModal.classList.contains('is-open')) return;
+    badgesModal.classList.remove('is-open');
+    badgesModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  }
+
   function updateWatchedToggle() {
     if (!watchedToggle) return;
     const isAuthed = Boolean(currentUser);
@@ -4582,6 +5301,7 @@
       watchedLabel.textContent = labelText;
     }
     updateWatchedBadges();
+    renderBadges();
   }
 
   function updateWatchedBadges() {
@@ -4674,6 +5394,50 @@
     }
   });
 
+  if (badgesButton) {
+    badgesButton.addEventListener('click', () => {
+      userDropdown.classList.remove('show');
+      if (!currentUser) {
+        authModal.classList.add('show');
+        return;
+      }
+      openBadgesModal();
+    });
+  }
+
+  if (badgesClose) {
+    badgesClose.addEventListener('click', closeBadgesModal);
+  }
+
+  if (badgesModal) {
+    badgesModal.addEventListener('click', (e) => {
+      if (e.target === badgesModal) {
+        closeBadgesModal();
+      }
+    });
+  }
+
+  if (badgeStatusFilter) {
+    badgeStatusFilter.addEventListener('change', (e) => {
+      badgeFilters.status = e.target.value;
+      renderBadges();
+    });
+  }
+
+  if (badgeTypeFilter) {
+    badgeTypeFilter.addEventListener('change', (e) => {
+      badgeFilters.type = e.target.value;
+      renderBadges();
+    });
+  }
+
+  if (badgeVariantFilter) {
+    badgeVariantFilter.addEventListener('change', (e) => {
+      badgeFilters.variant = e.target.value;
+      renderBadges();
+    });
+  }
+
   watchedToggle.addEventListener('click', async () => {
     if (!currentMovieId) return;
     if (!currentUser) {
@@ -4728,6 +5492,7 @@
       userDropdownName.textContent = user.displayName || 'User';
       userEmail.textContent = user.email;
       userAvatar.src = user.photoURL || 'https://via.placeholder.com/32';
+      renderBadges();
       if (isMovieDetailOpen() && currentMovieData) {
         prepareMovieProviders(currentMovieData);
       }
@@ -4737,6 +5502,7 @@
       currentUser = null;
       watchedIds = new Set();
       updateWatchedToggle();
+      closeBadgesModal();
       signInButton.style.display = 'flex';
       userMenu.style.display = 'none';
       updateCountryDisplay(null, null);
