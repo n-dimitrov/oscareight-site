@@ -1603,7 +1603,8 @@
 
         .badge-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, 160px);
+            justify-content: start;
             gap: 10px;
             padding-right: 4px;
         }
@@ -1619,8 +1620,8 @@
             gap: 8px;
             position: relative;
             overflow: hidden;
-            min-height: 160px;
-            height: auto;
+            width: 160px;
+            height: 160px;
             text-align: center;
             transition: all 0.3s ease;
         }
@@ -1766,6 +1767,14 @@
 
         .badge-card.is-earned .badge-period {
             color: var(--gold-deep);
+        }
+
+        .badge-placeholder {
+            width: 160px;
+            height: 160px;
+            border-radius: 10px;
+            border: 1px dashed rgba(13, 19, 33, 0.1);
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .badge-progress {
@@ -2586,7 +2595,7 @@
                     <select id="badgeVariantFilter" class="badge-filter-select">
                         <option value="all">All</option>
                         <option value="winners">Winners</option>
-                        <option value="all-nominees">All Nominees</option>
+                        <option value="all-nominees">Nominees</option>
                     </select>
                 </div>
                 <div id="badgeFilterCount" class="badge-filter-count"></div>
@@ -4569,7 +4578,7 @@
         badges.push({
           id: `big8-${year}-all`,
           title: 'Big 8 Complete',
-          subtitle: 'All Nominees',
+          subtitle: 'Nominees',
           type: 'big8',
           year: year,
           periodLabel: String(year),
@@ -4613,7 +4622,7 @@
         badges.push({
           id: `${categoryKey}-${decadeStart}s-all`,
           title: categoryBadgeNames[category],
-          subtitle: 'All Nominees',
+          subtitle: 'Nominees',
           type: 'category-decade',
           category: category,
           decadeStart: decadeStart,
@@ -5163,7 +5172,14 @@
       `;
     }).join('');
     
-    badgesGrid.innerHTML = cards || '<div class="empty-state">No badges match the filters.</div>';
+    // Add placeholders to fill the last row
+    const badgeCount = filteredBadges.length;
+    const badgesPerRow = Math.floor(1040 / 150); // ~7 badges per row (width + gap)
+    const remainder = badgeCount % badgesPerRow;
+    const placeholdersNeeded = remainder > 0 ? badgesPerRow - remainder : 0;
+    const placeholders = Array(placeholdersNeeded).fill('<div class="badge-placeholder"></div>').join('');
+    
+    badgesGrid.innerHTML = (cards + placeholders) || '<div class="empty-state">No badges match the filters.</div>';
     
     if (badgesSummary) {
       badgesSummary.textContent = `${earnedCount}/${badgeDefinitions.length} earned`;
