@@ -329,22 +329,32 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            color: var(--ink-soft);
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            display: flex;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(13, 19, 33, 0.78);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            transition: background-color 0.2s ease;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
         }
 
         .auth-close:hover {
-            background-color: rgba(13, 19, 33, 0.05);
+            transform: translateY(-1px);
+            background: rgba(13, 19, 33, 0.88);
+        }
+
+        .auth-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .auth-methods {
@@ -1206,16 +1216,33 @@
             position: absolute;
             top: 16px;
             right: 16px;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 1px solid rgba(13, 19, 33, 0.12);
-            background: rgba(255, 255, 255, 0.95);
-            color: var(--ink);
-            font-size: 1.4em;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(13, 19, 33, 0.18);
             z-index: 2;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(13, 19, 33, 0.78);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .wall-modal-close:hover {
+            transform: translateY(-1px);
+            background: rgba(13, 19, 33, 0.88);
+        }
+
+        .wall-modal-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .wall-modal .wall-controls,
@@ -1379,11 +1406,32 @@
         }
 
         .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.4em;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(13, 19, 33, 0.78);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            color: var(--ink-soft);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .modal-close:hover {
+            transform: translateY(-1px);
+            background: rgba(13, 19, 33, 0.88);
+        }
+
+        .modal-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .modal-body {
@@ -1813,11 +1861,32 @@
             position: absolute;
             top: 18px;
             right: 20px;
-            background: none;
-            border: none;
-            font-size: 1.4em;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(13, 19, 33, 0.12);
+            background: rgba(13, 19, 33, 0.78);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            color: var(--ink-soft);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .detail-close:hover {
+            transform: translateY(-1px);
+            background: rgba(13, 19, 33, 0.88);
+        }
+
+        .detail-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .detail-categories {
@@ -1947,8 +2016,6 @@
             .wall-modal-close {
                 top: 12px;
                 right: 12px;
-                width: 34px;
-                height: 34px;
             }
 
             .wall-controls {
@@ -2071,7 +2138,12 @@
     <!-- Sign In Modal -->
     <div id="authModal" class="auth-modal">
         <div class="auth-modal-content">
-            <button class="auth-close" id="closeAuthModal" aria-label="Close">&times;</button>
+            <button class="auth-close" id="closeAuthModal" aria-label="Close">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <line x1="6" y1="18" x2="18" y2="6"></line>
+                </svg>
+            </button>
             <div class="auth-modal-header">
                 <h2>Sign In</h2>
                 <p>Choose a method to sign in to OscarEight</p>
@@ -2178,7 +2250,12 @@
                         <span class="count-pill">0 N</span>
                     </div>
                 </div>
-                <button class="modal-close" type="button" aria-label="Close">×</button>
+                <button class="modal-close" type="button" aria-label="Close">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                        <line x1="6" y1="18" x2="18" y2="6"></line>
+                    </svg>
+                </button>
             </div>
             <div class="modal-body">
                 <div id="letterRail" class="letter-rail" aria-label="Movie index"></div>
@@ -2189,7 +2266,12 @@
 
     <div id="movieDetailModal" class="detail-modal" aria-hidden="true">
         <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="movieDetailTitle">
-            <button class="detail-close" type="button" aria-label="Close">×</button>
+            <button class="detail-close" type="button" aria-label="Close">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <line x1="6" y1="18" x2="18" y2="6"></line>
+                </svg>
+            </button>
             <img id="movieDetailPoster" class="detail-poster" alt="">
             <div>
                 <div class="detail-title-row">
@@ -2239,7 +2321,12 @@
                     </svg>
                 </button>
             </div>
-            <button class="wall-modal-close" type="button" aria-label="Close">×</button>
+            <button class="wall-control wall-modal-close" type="button" aria-label="Close">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <line x1="6" y1="18" x2="18" y2="6"></line>
+                </svg>
+            </button>
             <div id="postersWallGrid" class="wall-grid"></div>
             <div id="postersWallTooltip" class="wall-poster-tooltip-overlay" aria-live="polite"></div>
             <div id="postersWallCountdown" class="wall-countdown" aria-live="polite"></div>
