@@ -1993,27 +1993,28 @@
             animation: rise 0.3s ease;
             position: relative;
             max-height: 80vh;
-            overflow: visible;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .detail-card-body {
             display: grid;
             grid-template-columns: 140px 1fr;
             gap: 18px;
-            max-height: calc(80vh - 44px);
-            overflow: visible;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
         }
 
         .detail-content {
             display: flex;
             flex-direction: column;
             min-height: 0;
-            max-height: calc(80vh - 44px);
         }
 
         .detail-scroll {
             flex: 1;
-            overflow: auto;
             min-height: 0;
         }
 
@@ -2187,9 +2188,9 @@
 
         .watched-toggle.is-locked::after {
             top: calc(100% + 8px);
-            right: auto;
-            left: 50%;
-            transform: translate(-50%, 0);
+            right: 0;
+            left: auto;
+            transform: translateY(0);
         }
 
         .tooltip-trigger.is-locked:hover::after,
