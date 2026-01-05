@@ -459,28 +459,32 @@
             border-color: rgba(204, 155, 62, 0.6);
         }
 
-        .poster-wall-button::after {
+        .tooltip-trigger::after {
             content: attr(data-tooltip);
             position: absolute;
             top: -8px;
             right: 0;
+            left: auto;
             transform: translateY(-100%);
             padding: 6px 10px;
             border-radius: 999px;
             background: rgba(13, 19, 33, 0.92);
             color: #fff;
-            font-size: 0.7em;
+            font-family: var(--body-font);
+            font-size: 0.7rem;
             font-weight: 600;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             white-space: nowrap;
+            line-height: 1.2;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.15s ease;
+            z-index: 12;
         }
 
-        .poster-wall-button:hover::after,
-        .poster-wall-button:focus-visible::after {
+        .tooltip-trigger:hover::after,
+        .tooltip-trigger:focus-visible::after {
             opacity: 1;
         }
 
@@ -1984,15 +1988,33 @@
             border-radius: 20px;
             padding: 22px;
             width: min(720px, 92vw);
-            max-height: 80vh;
             box-shadow: var(--shadow);
             border: var(--card-border);
+            animation: rise 0.3s ease;
+            position: relative;
+            max-height: 80vh;
+            overflow: visible;
+        }
+
+        .detail-card-body {
             display: grid;
             grid-template-columns: 140px 1fr;
             gap: 18px;
+            max-height: calc(80vh - 44px);
+            overflow: visible;
+        }
+
+        .detail-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            max-height: calc(80vh - 44px);
+        }
+
+        .detail-scroll {
+            flex: 1;
             overflow: auto;
-            animation: rise 0.3s ease;
-            position: relative;
+            min-height: 0;
         }
 
         .detail-poster {
@@ -2014,6 +2036,8 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            position: relative;
+            z-index: 4;
         }
 
         .watched-toggle {
@@ -2032,7 +2056,7 @@
             gap: 4px;
             transition: all 0.2s ease;
             position: relative;
-            z-index: 2;
+            z-index: 4;
         }
 
         .watched-toggle:hover {
@@ -2057,27 +2081,7 @@
         }
 
         .watched-toggle::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            right: 0;
-            top: calc(100% + 8px);
-            background: rgba(13, 19, 33, 0.92);
-            color: #fff;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 0.78em;
-            white-space: nowrap;
-            opacity: 0;
-            transform: translateY(-4px);
-            pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease;
             z-index: 3;
-        }
-
-        .watched-toggle:hover::after,
-        .watched-toggle:focus-visible::after {
-            opacity: 1;
-            transform: translateY(0);
         }
 
         .watched-icon {
@@ -2155,6 +2159,7 @@
         }
 
         .providers-toggle {
+            position: relative;
             border: 1px solid rgba(13, 19, 33, 0.2);
             background: #fff;
             color: var(--ink);
@@ -2166,6 +2171,30 @@
 
         .providers-toggle:hover {
             border-color: var(--gold-deep);
+        }
+
+        .providers-toggle.is-locked {
+            opacity: 0.8;
+        }
+
+        .tooltip-trigger.is-locked::after {
+            top: -8px;
+            right: 0;
+            left: auto;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        .watched-toggle.is-locked::after {
+            top: calc(100% + 8px);
+            right: auto;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+
+        .tooltip-trigger.is-locked:hover::after,
+        .tooltip-trigger.is-locked:focus-visible::after {
+            opacity: 1;
         }
 
         .providers-content {
@@ -2419,15 +2448,19 @@
             }
 
             .detail-card {
-                grid-template-columns: 1fr;
                 padding: 18px;
                 max-height: 85vh;
-                overflow-x: hidden;
+            }
+
+            .detail-card-body {
+                grid-template-columns: 1fr;
+                max-height: calc(85vh - 36px);
                 justify-items: center;
             }
 
-            .detail-card > div {
+            .detail-content {
                 width: 100%;
+                max-height: calc(85vh - 36px);
             }
 
             .detail-poster {
@@ -2553,7 +2586,7 @@
         </header>
 
         <section class="poster-strip is-empty" id="posterStripSection">
-            <button id="postersWallOpen" class="poster-wall-button" type="button" aria-label="Open posters wall" data-tooltip="Poster Wall">
+                <button id="postersWallOpen" class="poster-wall-button tooltip-trigger" type="button" aria-label="Open posters wall" data-tooltip="Poster Wall">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <rect x="3" y="3" width="6" height="6" rx="1.5"></rect>
                     <rect x="15" y="3" width="6" height="6" rx="1.5"></rect>
@@ -2698,20 +2731,24 @@
             </svg>
         </button>
         <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="movieDetailTitle">
-            <img id="movieDetailPoster" class="detail-poster" alt="">
-            <div>
-                <div class="detail-title-row">
-                    <div id="movieDetailTitle" class="detail-title"></div>
-                    <button id="watchedToggle" class="watched-toggle" type="button" aria-pressed="false" aria-label="Sign in to track watched" data-tooltip="Sign in to track watched">
-                        <span class="watched-icon watched-icon--on" aria-hidden="true">&#10003;</span>
-                        <span class="watched-icon watched-icon--off" aria-hidden="true">&#10003;</span>
-                        <span class="watched-label" id="watchedLabel">Not watched</span>
-                    </button>
+            <div class="detail-card-body">
+                <img id="movieDetailPoster" class="detail-poster" alt="">
+                <div class="detail-content">
+                    <div class="detail-title-row">
+                        <div id="movieDetailTitle" class="detail-title"></div>
+                        <button id="watchedToggle" class="watched-toggle tooltip-trigger" type="button" aria-pressed="false" aria-label="Sign in to track watched" data-tooltip="Sign in to track watched">
+                            <span class="watched-icon watched-icon--on" aria-hidden="true">&#10003;</span>
+                            <span class="watched-icon watched-icon--off" aria-hidden="true">&#10003;</span>
+                            <span class="watched-label" id="watchedLabel">Not watched</span>
+                        </button>
+                    </div>
+                    <div class="detail-scroll">
+                        <div id="movieDetailMeta" class="detail-meta"></div>
+                        <div id="movieDetailOverview" class="detail-overview"></div>
+                        <div id="movieDetailProviders" class="detail-providers"></div>
+                        <div id="movieDetailCategories" class="detail-categories"></div>
+                    </div>
                 </div>
-                <div id="movieDetailMeta" class="detail-meta"></div>
-                <div id="movieDetailOverview" class="detail-overview"></div>
-                <div id="movieDetailProviders" class="detail-providers"></div>
-                <div id="movieDetailCategories" class="detail-categories"></div>
             </div>
         </div>
     </div>
@@ -4192,6 +4229,12 @@
         function openPostersWall() {
             const modal = document.getElementById('postersWallModal');
             if (!modal) return;
+            if (window.isUserAuthenticated && !window.isUserAuthenticated()) {
+                if (window.openAuthModal) {
+                    window.openAuthModal();
+                }
+                return;
+            }
             postersWallOpen = true;
             const layout = getPosterWallLayout();
             const selection = getPostersWallSelection(layout);
@@ -4633,6 +4676,7 @@
   const badgeFilterCount = document.getElementById('badgeFilterCount');
   const watchedLabel = document.getElementById('watchedLabel');
   const watchedToggle = document.getElementById('watchedToggle');
+  const postersWallOpenButton = document.getElementById('postersWallOpen');
   const movieDetailProviders = document.getElementById('movieDetailProviders');
 
   let currentUser = null;
@@ -4926,7 +4970,7 @@
         <span>Where to watch</span>
         <div class="providers-actions">
           <span id="providersCountry" class="providers-country"></span>
-          <button id="providersToggle" class="providers-toggle" type="button" aria-expanded="false">Show</button>
+          <button id="providersToggle" class="providers-toggle tooltip-trigger" type="button" aria-expanded="false">Show</button>
         </div>
       </div>
       <div id="providersContent" class="providers-content"></div>
@@ -4934,6 +4978,10 @@
     providersToggle = document.getElementById('providersToggle');
     providersContent = document.getElementById('providersContent');
     providersToggle.addEventListener('click', () => {
+      if (!currentUser) {
+        openAuthModal();
+        return;
+      }
       providersExpanded = !providersExpanded;
       updateProvidersToggle();
       if (providersExpanded && currentMovieData) {
@@ -4942,6 +4990,7 @@
     });
     updateProvidersToggle();
     updateProvidersCountry();
+    updateProvidersAccess();
   }
 
   function renderProvidersShell(contentHtml) {
@@ -4975,7 +5024,9 @@
     currentMovieData = movie;
     if (!movieDetailProviders) return;
     if (!currentUser) {
-      hideProviders();
+      setupProvidersSection();
+      renderProvidersMessage('Sign in to see where to watch.');
+      updateProvidersAccess();
       return;
     }
     providersRequestId += 1;
@@ -5049,7 +5100,7 @@
       return;
     }
     if (!currentUser) {
-      hideProviders();
+      renderProvidersMessage('Sign in to see where to watch.');
       return;
     }
     const countryCode = getEffectiveCountryCode();
@@ -5341,7 +5392,35 @@
     }
     updateWatchedBadges();
     renderBadges();
+    updatePostersWallAccess();
+    updateProvidersAccess();
   }
+
+  function updatePostersWallAccess() {
+    if (!postersWallOpenButton) return;
+    const isAuthed = Boolean(currentUser);
+    const tooltipText = isAuthed ? 'Poster Wall' : 'Sign in to open Poster Wall';
+    postersWallOpenButton.classList.toggle('is-locked', !isAuthed);
+    postersWallOpenButton.setAttribute('aria-label', tooltipText);
+    postersWallOpenButton.setAttribute('data-tooltip', tooltipText);
+  }
+
+  function updateProvidersAccess() {
+    if (!providersToggle) return;
+    const isAuthed = Boolean(currentUser);
+    const tooltipText = isAuthed ? 'Where to watch' : 'Sign in to see where to watch';
+    providersToggle.classList.toggle('is-locked', !isAuthed);
+    providersToggle.setAttribute('aria-label', tooltipText);
+    providersToggle.setAttribute('data-tooltip', tooltipText);
+  }
+
+  function openAuthModal() {
+    if (!authModal) return;
+    authModal.classList.add('show');
+  }
+
+  window.openAuthModal = openAuthModal;
+  window.isUserAuthenticated = () => Boolean(currentUser);
 
   function updateWatchedBadges() {
     const badges = document.querySelectorAll('.watched-badge[data-movie-id]');
