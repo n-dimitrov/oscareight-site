@@ -1943,6 +1943,7 @@
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
         }
+        window.openMovieDetail = openMovieDetail;
 
         function closeMovieDetail() {
             const modal = document.getElementById('movieDetailModal');
@@ -3106,8 +3107,8 @@
     badgeDetailTable.querySelectorAll('.movie-link').forEach((button) => {
       button.addEventListener('click', () => {
         const movieId = button.getAttribute('data-movie-id');
-        if (movieId) {
-          openMovieDetail(movieId);
+        if (movieId && window.openMovieDetail) {
+          window.openMovieDetail(movieId);
         }
       });
     });
