@@ -206,16 +206,12 @@
                     <label class="badge-filter-label" for="badgeTypeFilter">Type</label>
                     <select id="badgeTypeFilter" class="badge-filter-select">
                         <option value="all">All</option>
-                        <option value="big8">Big 8 Complete</option>
-                        <option value="category-decade">Category Masters</option>
                     </select>
                 </div>
                 <div class="badge-filter-group">
                     <label class="badge-filter-label" for="badgeVariantFilter">Variant</label>
                     <select id="badgeVariantFilter" class="badge-filter-select">
                         <option value="all">All</option>
-                        <option value="winners">Winners</option>
-                        <option value="all-nominees">Nominees</option>
                     </select>
                 </div>
                 <div id="badgeFilterCount" class="badge-filter-count"></div>
@@ -2206,8 +2202,119 @@
   let providersToggle = null;
   let providersContent = null;
   let providersExpanded = false;
+  let badgeDefinitions = [];
+  let currentBadgeFile = 'badges-b8w'; // Format: badges-{key}
+  let badgeResolvers = {}; // Custom resolvers from badge files
 
-  // Badge generation rules
+  // Dynamic badge definition loading
+  async function loadBadgeDefinitions(badgeFileName) {
+    try {
+      console.log(`Loading badge definitions from ${badgeFileName}...`);
+      const module = await import(`./js/${badgeFileName}.js`);
+      badgeDefinitions = module.generateBadges(oscarsData, categoryOrder);
+      badgeResolvers = module.badgeResolvers || {};
+      console.log(`✓ Loaded ${badgeDefinitions.length} badges from ${badgeFileName}`);
+      if (module.badgeMetadata) {
+        console.log(`Badge set: ${module.badgeMetadata.name} (v${module.badgeMetadata.version})`);
+      }
+      populateBadgeFilters();
+      return true;
+    } catch (error) {
+      console.error(`✗ Failed to load ${badgeFileName}:`, error);
+      // Fallback to default if not already trying default
+      if (badgeFileName !== 'badges-b8w') {
+        console.log('Falling back to badges-b8w...');
+        return loadBadgeDefinitions('badges-b8w');
+      }
+      return false;
+    }
+  }
+
+  function populateBadgeFilters() {
+    if (!badgeTypeFilter || !badgeVariantFilter) return;
+    
+    // Collect unique types and their display names
+    const typeMap = new Map();
+    const hasWinners = badgeDefinitions.some(b => b.includeNominees === false);
+    const hasNominees = badgeDefinitions.some(b => b.includeNominees === true);
+    
+    badgeDefinitions.forEach(badge => {
+      if (badge.type && !typeMap.has(badge.type)) {
+        let displayName = badge.type;
+        // Generate friendly display names
+        if (badge.type === 'big8') displayName = 'Big 8 Complete';
+        else if (badge.type === 'category-decade') displayName = 'Category Masters';
+        else if (badge.type === 'era-challenge') displayName = 'Era Challenges';
+        else if (badge.type === 'achievement') displayName = 'Achievements';
+        else {
+          // Convert kebab-case to Title Case
+          displayName = badge.type.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ');
+        }
+        typeMap.set(badge.type, displayName);
+      }
+    });
+    
+    // Populate type filter
+    const currentTypeValue = badgeTypeFilter.value;
+    badgeTypeFilter.innerHTML = '<option value="all">All</option>';
+    Array.from(typeMap.entries()).sort((a, b) => a[1].localeCompare(b[1])).forEach(([value, name]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = name;
+      badgeTypeFilter.appendChild(option);
+    });
+    // Restore previous selection if it still exists
+    if (Array.from(badgeTypeFilter.options).some(opt => opt.value === currentTypeValue)) {
+      badgeTypeFilter.value = currentTypeValue;
+    }
+    
+    // Populate variant filter
+    const currentVariantValue = badgeVariantFilter.value;
+    badgeVariantFilter.innerHTML = '<option value="all">All</option>';
+    if (hasWinners) {
+      const winnersOption = document.createElement('option');
+      winnersOption.value = 'winners';
+      winnersOption.textContent = 'Winners';
+      badgeVariantFilter.appendChild(winnersOption);
+    }
+    if (hasNominees) {
+      const nomineesOption = document.createElement('option');
+      nomineesOption.value = 'all-nominees';
+      nomineesOption.textContent = 'Nominees';
+      badgeVariantFilter.appendChild(nomineesOption);
+    }
+    // Restore previous selection if it still exists
+    if (Array.from(badgeVariantFilter.options).some(opt => opt.value === currentVariantValue)) {
+      badgeVariantFilter.value = currentVariantValue;
+    }
+  }
+
+  async function loadUserBadgePreference(user) {
+    if (!user) return 'b8w';
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const snapshot = await getDoc(userRef);
+      const data = snapshot.exists() ? snapshot.data() : null;
+      let badgeKey = data?.badges;
+      
+      // If badges field is missing, save the default
+      if (!badgeKey) {
+        badgeKey = 'b8w';
+        await setDoc(userRef, { badges: badgeKey }, { merge: true });
+        console.log(`Saved default badge key: ${badgeKey}`);
+      }
+      
+      console.log(`User badge key: ${badgeKey}`);
+      return badgeKey;
+    } catch (error) {
+      console.error('Badge preference load error:', error);
+      return 'badges-default';
+    }
+  }
+
+  // Legacy badge generation (no longer used, kept for reference)
   function generateBadgeDefinitions() {
     const badges = [];
     const years = Object.keys(oscarsData).map(Number).sort((a, b) => a - b);
@@ -2287,8 +2394,6 @@
 
     return badges;
   }
-
-  const badgeDefinitions = generateBadgeDefinitions();
 
   function updateCountryDisplay(code, name, suffix = '') {
     if (!userCountry) return;
@@ -2726,6 +2831,12 @@
   }
 
   function getBadgeTargetIds(badge) {
+    // Check if there's a custom resolver for this badge type
+    if (badgeResolvers[badge.type]) {
+      return badgeResolvers[badge.type](badge, oscarsData, categoryOrder);
+    }
+    
+    // Default built-in types
     if (badge.type === 'big8') {
       return getBig8YearMovieIds(badge.year, badge.includeNominees);
     }
@@ -2735,7 +2846,31 @@
     if (badge.type === 'category-decade') {
       return getCategoryDecadeMovieIds(badge.category, badge.decadeStart, badge.includeNominees);
     }
+    if (badge.type === 'era-challenge') {
+      return getEraChallengeMovieIds(badge.category, badge.startYear, badge.endYear, badge.includeNominees);
+    }
     return [];
+  }
+
+  function getEraChallengeMovieIds(category, startYear, endYear, includeNominees) {
+    const ids = new Set();
+    for (let year = startYear; year <= endYear; year += 1) {
+      const yearData = oscarsData[year];
+      if (!yearData) continue;
+      const categoryData = yearData[category];
+      if (!categoryData) continue;
+      if (categoryData.winner && categoryData.winner.id) {
+        ids.add(categoryData.winner.id);
+      }
+      if (includeNominees && Array.isArray(categoryData.nominees)) {
+        categoryData.nominees.forEach((nominee) => {
+          if (nominee && nominee.id) {
+            ids.add(nominee.id);
+          }
+        });
+      }
+    }
+    return Array.from(ids);
   }
 
   function getBadgeProgress(badge) {
@@ -3113,6 +3248,19 @@
       // User is signed in
       console.log('User is authenticated:', user.displayName);
       currentUser = user;
+      
+      // Load user's badge key
+      const badgeKey = await loadUserBadgePreference(user);
+      currentBadgeFile = `badges-${badgeKey}`;
+      
+      // Load the badge definitions
+      await loadBadgeDefinitions(currentBadgeFile);
+      
+      // Update badge button text with key
+      if (badgesButton) {
+        badgesButton.textContent = `Badges (${badgeKey})`;
+      }
+      
       await ensureUserCountry(user);
       await loadUserCountry(user);
       loadWatchedIds(user);
@@ -3131,11 +3279,21 @@
       console.log('User is not authenticated');
       currentUser = null;
       watchedIds = new Set();
+      
+      // Load default badges for unauthenticated users
+      currentBadgeFile = 'badges-b8w';
+      await loadBadgeDefinitions(currentBadgeFile);
       updateWatchedToggle();
       closeBadgesModal();
       signInButton.style.display = 'flex';
       userMenu.style.display = 'none';
+      if (badgesButton) {
+        badgesButton.textContent = 'Badges';
+      }
       updateCountryDisplay(null, null);
+      if (userBadgeKey) {
+        userBadgeKey.textContent = '';
+      }
       if (isMovieDetailOpen() && currentMovieData) {
         prepareMovieProviders(currentMovieData);
       }
@@ -3188,6 +3346,9 @@
       }
     });
   }
+
+  // Load default badge definitions on page load
+  loadBadgeDefinitions('badges-b8w');
 </script>
 </body>
 </html>
