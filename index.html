@@ -551,6 +551,17 @@
             font-weight: 600;
             font-size: 1em;
             color: var(--ink);
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+        }
+
+        .poster-strip-info-title:hover {
+            opacity: 0.7;
+            transform: translateY(-1px);
         }
 
         .poster-strip-info-title.is-winner {
@@ -966,12 +977,27 @@
             box-shadow: 0 6px 16px rgba(13, 19, 33, 0.12);
         }
 
+        .winner-poster-button {
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .winner-poster-button:hover {
+            transform: scale(1.05);
+            opacity: 0.85;
+        }
+
         .winner-poster {
             width: 64px;
             height: 96px;
             border-radius: 8px;
             object-fit: cover;
             background: rgba(13, 19, 33, 0.08);
+            display: block;
         }
 
         .winner-content {
@@ -2903,9 +2929,20 @@
                 const button = e.target.closest('.poster-strip-button');
                 if (button && button.dataset.movieId) {
                     pausePosterStrip();
-                    highlightPosterById(button.dataset.movieId);
+                    openMovieDetail(button.dataset.movieId);
                 }
             });
+
+            const posterStripInfo = document.getElementById('posterStripInfo');
+            if (posterStripInfo) {
+                posterStripInfo.addEventListener('click', (e) => {
+                    const button = e.target.closest('.poster-strip-info-title');
+                    if (button && button.dataset.movieId) {
+                        pausePosterStrip();
+                        openMovieDetail(button.dataset.movieId);
+                    }
+                });
+            }
 
             const postersWallOpenButton = document.getElementById('postersWallOpen');
             if (postersWallOpenButton) {
@@ -3901,7 +3938,7 @@
             const star = posterInfo.isBestPictureNominee ? `<span class="${starClass}">&#9733;</span>` : '';
             const awardsClass = posterInfo.isWinner ? 'poster-strip-info-awards is-winner' : 'poster-strip-info-awards';
             info.innerHTML = `
-                <div class="${titleClass}">${posterInfo.title}${star}</div>
+                <button class="${titleClass}" type="button" data-movie-id="${movieId}">${posterInfo.title}${star}</button>
                 <div class="poster-strip-info-year">${posterInfo.year}</div>
                 <div class="${awardsClass}">${posterInfo.awardsLine}</div>
             `.trim();
@@ -4069,7 +4106,9 @@
                 if (showWinner) {
                     html += `
                         <div class="winner-info">
-                            <img class="winner-poster" data-src="${getPosterUrl(item.winner.id)}" alt="" loading="lazy">
+                            <button class="winner-poster-button movie-link" type="button" data-movie-id="${item.winner.id || ''}" aria-label="View ${item.winner.title}">
+                                <img class="winner-poster" data-src="${getPosterUrl(item.winner.id)}" alt="" loading="lazy">
+                            </button>
                             <div class="winner-content">
                                 <div class="winner-label">Winner</div>
                                 <button class="winner-title movie-link" type="button" data-movie-id="${item.winner.id || ''}">
