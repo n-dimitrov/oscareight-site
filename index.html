@@ -1943,6 +1943,7 @@
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
         }
+        window.openMovieDetail = openMovieDetail;
 
         function closeMovieDetail() {
             const modal = document.getElementById('movieDetailModal');
@@ -2236,13 +2237,10 @@
   // Dynamic badge definition loading
   async function loadBadgeDefinitions(badgeFileName) {
     try {
-      console.log(`Loading badge definitions from ${badgeFileName}...`);
       const module = await import(`./js/${badgeFileName}.js`);
       badgeDefinitions = module.generateBadges(oscarsData, categoryOrder);
       badgeResolvers = module.badgeResolvers || {};
-      console.log(`✓ Loaded ${badgeDefinitions.length} badges from ${badgeFileName}`);
       if (module.badgeMetadata) {
-        console.log(`Badge set: ${module.badgeMetadata.name} (v${module.badgeMetadata.version})`);
       }
       populateBadgeFilters();
       return true;
@@ -2250,7 +2248,6 @@
       console.error(`✗ Failed to load ${badgeFileName}:`, error);
       // Fallback to default if not already trying default
       if (badgeFileName !== 'badges-b8w') {
-        console.log('Falling back to badges-b8w...');
         return loadBadgeDefinitions('badges-b8w');
       }
       return false;
@@ -2330,10 +2327,8 @@
       if (!badgeKey) {
         badgeKey = 'b8w';
         await setDoc(userRef, { badges: badgeKey }, { merge: true });
-        console.log(`Saved default badge key: ${badgeKey}`);
       }
       
-      console.log(`User badge key: ${badgeKey}`);
       return badgeKey;
     } catch (error) {
       console.error('Badge preference load error:', error);
@@ -3112,8 +3107,8 @@
     badgeDetailTable.querySelectorAll('.movie-link').forEach((button) => {
       button.addEventListener('click', () => {
         const movieId = button.getAttribute('data-movie-id');
-        if (movieId) {
-          openMovieDetail(movieId);
+        if (movieId && window.openMovieDetail) {
+          window.openMovieDetail(movieId);
         }
       });
     });
@@ -3303,7 +3298,6 @@
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log('User signed in:', user.displayName);
       authModal.classList.remove('show');
     } catch (error) {
       console.error('Sign in error:', error.code, error.message);
@@ -3315,7 +3309,6 @@
   signOutButton.addEventListener('click', async () => {
     try {
       await signOut(auth);
-      console.log('User signed out');
       userDropdown.classList.remove('show');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -3422,7 +3415,6 @@
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       // User is signed in
-      console.log('User is authenticated:', user.displayName);
       currentUser = user;
       
       // Load user's badge key
@@ -3452,13 +3444,13 @@
       }
     } else {
       // User is signed out
-      console.log('User is not authenticated');
       currentUser = null;
       watchedIds = new Set();
       
       // Load default badges for unauthenticated users
-      currentBadgeFile = 'badges-b8w';
-      await loadBadgeDefinitions(currentBadgeFile);
+      currentBadgeFile = '';
+      badgeDefinitions = [];
+      badgeResolvers = {};
       updateWatchedToggle();
       closeBadgesModal();
       signInButton.style.display = 'flex';
@@ -3520,8 +3512,7 @@
     });
   }
 
-  // Load default badge definitions on page load
-  loadBadgeDefinitions('badges-b8w');
+  // Badge definitions load on authentication only.
 </script>
 </body>
 </html>
