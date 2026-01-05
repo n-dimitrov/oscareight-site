@@ -1956,6 +1956,13 @@ footer p + p {
     opacity: 1;
 }
 
+.watched-text {
+    font-size: 0.78em;
+    color: var(--ink-soft);
+    margin-left: 6px;
+    white-space: nowrap;
+}
+
 .detail-modal {
     position: fixed;
     inset: 0;
