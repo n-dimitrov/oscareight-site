@@ -1560,7 +1560,7 @@ footer p + p {
 
 .badge-body {
     display: block;
-    overflow: auto;
+    overflow-y: scroll; /* Always show scrollbar to prevent reflow */
     padding-right: 6px;
 }
 
@@ -1625,7 +1625,7 @@ footer p + p {
 
 .badge-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 160px);
+    grid-template-columns: repeat(6, 160px);
     justify-content: center;
     gap: 10px;
     padding-right: 4px;

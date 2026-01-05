@@ -2975,8 +2975,9 @@
     }).join('');
     
     // Add placeholders to fill the last row
+    // With scrollbar always visible, we have consistent width
     const badgeCount = filteredBadges.length;
-    const badgesPerRow = Math.floor(1040 / 150); // ~7 badges per row (width + gap)
+    const badgesPerRow = 6; // Fixed: modal width allows 6 badges with scrollbar
     const remainder = badgeCount % badgesPerRow;
     const placeholdersNeeded = remainder > 0 ? badgesPerRow - remainder : 0;
     const placeholders = Array(placeholdersNeeded).fill('<div class="badge-placeholder"></div>').join('');
