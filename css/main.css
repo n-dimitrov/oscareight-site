@@ -1594,6 +1594,27 @@ footer p + p {
     align-items: center;
 }
 
+.badge-support {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0;
+    margin: -10px 0 -2px;
+    overflow: hidden;
+    border-top: 1px solid rgba(13, 19, 33, 0.06);
+    transform: scale(0.6);
+    transform-origin: center;
+}
+
+.badge-support .bmc-button {
+    display: inline-block;
+}
+
+.badge-support iframe {
+    display: inline-block;
+}
+
 .badge-filter-group {
     display: flex;
     flex-direction: column;

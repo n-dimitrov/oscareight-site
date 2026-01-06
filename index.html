@@ -219,6 +219,9 @@
             <div class="modal-body badge-body">
                 <div id="badgesGrid" class="badge-grid"></div>
             </div>
+            <div class="badge-support" id="badgeSupport" aria-label="Support this project">
+                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="oscareight" data-color="#f0dfb9" data-emoji="☕" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#FFDD00"></script>
+            </div>
         </div>
     </div>
 
@@ -2208,6 +2211,7 @@
   const badgeTypeFilter = document.getElementById('badgeTypeFilter');
   const badgeVariantFilter = document.getElementById('badgeVariantFilter');
   const badgeFilterCount = document.getElementById('badgeFilterCount');
+  const badgeSupport = document.getElementById('badgeSupport');
   const badgeDetailModal = document.getElementById('badgeDetailModal');
   const badgeDetailClose = document.getElementById('badgeDetailClose');
   const badgeDetailTitle = document.getElementById('badgeDetailTitle');
@@ -2938,6 +2942,9 @@
       if (badgeFilterCount) {
         badgeFilterCount.textContent = '';
       }
+      if (badgeSupport) {
+        badgeSupport.style.display = 'none';
+      }
       previousEarnedBadgeIds = new Set();
       return;
     }
@@ -2951,6 +2958,16 @@
         earnedNow.add(badge.id);
       }
     });
+    if (badgeSupport) {
+      badgeSupport.style.display = earnedNow.size >= 3 ? 'flex' : 'none';
+      const supportButton = badgeSupport.querySelector('.bmc-button');
+      if (supportButton) {
+        supportButton.setAttribute('title', 'Support OscarEight');
+        supportButton.setAttribute('aria-label', 'Support OscarEight');
+      } else {
+        badgeSupport.setAttribute('title', 'Support OscarEight');
+      }
+    }
 
     // Apply filters
     const filteredBadges = badgeDefinitions.filter((badge) => {
