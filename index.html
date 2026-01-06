@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="3Gu5CK-uAJJY2tzYRhDu7x06dXa-0Ww81kn8VcFM9Dg">
     <title>OscarEight - Academy Awards Explorer</title>
-    <link rel="stylesheet" href="css/main.css?v=ana">
+    <link rel="stylesheet" href="css/main.css?v=ana2">
 </head>
 <body>
     <div class="backdrop" aria-hidden="true">
@@ -237,6 +237,7 @@
                 </div>
             </div>
             <div class="modal-body">
+                <div id="badgeDetailLetterRail" class="letter-rail" aria-label="Movie index"></div>
                 <div id="badgeDetailTable" class="modal-table"></div>
             </div>
         </div>
@@ -411,6 +412,7 @@
             globalMovieStats = stats;
             return globalMovieStats;
         }
+        window.getGlobalMovieStats = getGlobalMovieStats;
 
         // Initialize
         function init() {
@@ -749,32 +751,39 @@
             return watchedCount;
         }
 
+        function buildMoviesCountPill(uniqueCount, watchedCount, countLinkId) {
+            const movieValue = countLinkId
+                ? `<button id="${countLinkId}" class="count-link" type="button">${uniqueCount}</button>`
+                : `${uniqueCount}`;
+            if (watchedCount === null) {
+                return `
+                    <span class="count-pill count-pill--stacked">
+                        <span class="count-pill-value">
+                            ${movieValue}
+                        </span>
+                        <span class="count-pill-label">Movies</span>
+                    </span>
+                `;
+            }
+            return `
+                <span class="count-pill count-pill--combo">
+                    <span class="count-pill-grid">
+                        <span class="count-pill-value">${watchedCount}</span>
+                        <span class="count-pill-value">${movieValue}</span>
+                        <span class="count-pill-label">Watched</span>
+                        <span class="count-pill-label">Movies</span>
+                    </span>
+                </span>
+            `;
+        }
+        window.buildMoviesCountPill = buildMoviesCountPill;
+
         function updateResultsCount() {
             const resultsCount = document.getElementById('resultsCount');
             const modalCounts = document.getElementById('moviesModalCounts');
             const uniqueCount = latestMovieStats.length;
             const watchedCount = getWatchedCountForStats();
-            const moviesCountHtml = watchedCount === null
-                ? `
-                    <span class="count-pill count-pill--stacked">
-                        <span class="count-pill-value">
-                            <button id="moviesCountButton" class="count-link" type="button">${uniqueCount}</button>
-                        </span>
-                        <span class="count-pill-label">Movies</span>
-                    </span>
-                `
-                : `
-                    <span class="count-pill count-pill--combo">
-                        <span class="count-pill-grid">
-                            <span class="count-pill-value">${watchedCount}</span>
-                            <span class="count-pill-value">
-                                <button id="moviesCountButton" class="count-link" type="button">${uniqueCount}</button>
-                            </span>
-                            <span class="count-pill-label">Watched</span>
-                            <span class="count-pill-label">Movies</span>
-                        </span>
-                    </span>
-                `;
+            const moviesCountHtml = buildMoviesCountPill(uniqueCount, watchedCount, 'moviesCountButton');
 
             resultsCount.innerHTML = moviesCountHtml.trim();
 
@@ -792,23 +801,7 @@
                     totalWins += entry.wins || 0;
                     totalNominations += entry.nominations || 0;
                 });
-                const moviesPill = watchedCount === null
-                    ? `
-                        <span class="count-pill count-pill--stacked">
-                            <span class="count-pill-value">${uniqueCount}</span>
-                            <span class="count-pill-label">Movies</span>
-                        </span>
-                    `
-                    : `
-                        <span class="count-pill count-pill--combo">
-                            <span class="count-pill-grid">
-                                <span class="count-pill-value">${watchedCount}</span>
-                                <span class="count-pill-value">${uniqueCount}</span>
-                                <span class="count-pill-label">Watched</span>
-                                <span class="count-pill-label">Movies</span>
-                            </span>
-                        </span>
-                    `;
+                const moviesPill = buildMoviesCountPill(uniqueCount, watchedCount, null);
                 modalCounts.innerHTML = `
                     <span class="count-pill count-pill--combo">
                         <span class="count-pill-grid">
@@ -1805,7 +1798,7 @@
                 tableHost.innerHTML = '<div class="no-results">No movies available</div>';
                 letterRail.innerHTML = '';
             } else {
-                renderMoviesTable(tableHost);
+                renderMoviesTable(tableHost, latestMovieStats, letterRail);
                 renderLetterRail(letterRail, tableHost);
             }
 
@@ -1956,7 +1949,7 @@
             }
         }
 
-        function renderMoviesTable(tableHost) {
+        function renderMoviesTable(tableHost, moviesList = latestMovieStats, letterRail = null) {
             const globalStats = getGlobalMovieStats();
             const getScore = (movie) => {
                 if (!movie.id || !moviesData[movie.id]) {
@@ -1978,7 +1971,20 @@
                 if (entry) return entry.nominations;
                 return movie.wins + movie.nominees;
             };
-            const sorted = [...latestMovieStats].sort((a, b) => {
+            const getBestPictureStatus = (movie) => {
+                if (!movie || !movie.year) return { isNominee: false, isWinner: false };
+                const yearData = oscarsData[movie.year];
+                if (!yearData || !yearData['Best Picture']) {
+                    return { isNominee: false, isWinner: false };
+                }
+                const categoryData = yearData['Best Picture'];
+                const matchById = (item) => movie.id && item && item.id === movie.id;
+                const matchByTitle = (item) => !movie.id && item && item.title && movie.title && item.title === movie.title;
+                const isWinner = matchById(categoryData.winner) || matchByTitle(categoryData.winner);
+                const isNominee = isWinner || (categoryData.nominees || []).some(item => matchById(item) || matchByTitle(item));
+                return { isNominee, isWinner };
+            };
+            const sorted = [...moviesList].sort((a, b) => {
                 const direction = tableSort.direction === 'asc' ? 1 : -1;
                 if (tableSort.key === 'title') {
                     return (a.title.localeCompare(b.title) || (parseInt(a.year) - parseInt(b.year))) * direction;
@@ -2047,11 +2053,16 @@
                                 const scoreLabel = score === null ? '—' : score.toFixed(1);
                                 const winsCount = getWins(movie);
                                 const totalNominations = getTotalNominations(movie);
+                                const bestPicture = getBestPictureStatus(movie);
+                                const titleClass = bestPicture.isWinner ? 'movie-link best-picture-winner' : 'movie-link';
+                                const star = bestPicture.isNominee
+                                    ? `<span class="best-picture-star${bestPicture.isWinner ? ' is-winner' : ''}">&#9733;</span>`
+                                    : '';
                                 return `
                                     <tr data-letter="${letter}">
                                         <td>
-                                            <button class="movie-link" type="button" data-movie-id="${movie.id || ''}">
-                                                ${titleLabel}
+                                            <button class="${titleClass}" type="button" data-movie-id="${movie.id || ''}">
+                                                ${titleLabel}${star}
                                             </button>
                                         </td>
                                         <td class="watched-cell">
@@ -2082,8 +2093,10 @@
                         tableSort.key = key;
                         tableSort.direction = 'asc';
                     }
-                    renderMoviesTable(tableHost);
-                    renderLetterRail(document.getElementById('letterRail'), tableHost);
+                    renderMoviesTable(tableHost, moviesList, letterRail);
+                    if (letterRail) {
+                        renderLetterRail(letterRail, tableHost);
+                    }
                 });
             });
 
@@ -2096,6 +2109,7 @@
                 });
             });
         }
+        window.renderMoviesTable = renderMoviesTable;
 
         function renderLetterRail(letterRail, tableHost) {
             const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -2125,6 +2139,7 @@
                 });
             });
         }
+        window.renderLetterRail = renderLetterRail;
 
         // Initialize the app
         init();
@@ -3042,13 +3057,61 @@
     });
   }
 
+  function buildBadgeMovieStats(ids) {
+    const globalStats = window.getGlobalMovieStats ? window.getGlobalMovieStats() : {};
+    const uniqueIds = Array.from(new Set(ids));
+    return uniqueIds.map((id) => {
+      const movie = moviesData[id] || {};
+      const title = movie.title || 'Unknown';
+      const year = movie.year || '';
+      const key = id ? `id:${id}` : `title:${title}__${year}`;
+      const entry = globalStats[key];
+      const wins = entry ? entry.wins : 0;
+      const nominations = entry ? entry.nominations : 0;
+      return {
+        id,
+        title,
+        year,
+        wins,
+        nominees: Math.max(nominations - wins, 0)
+      };
+    });
+  }
+
   function updateBadgeDetailCounts(badge) {
-    if (!badgeDetailCounts) return;
-    const progress = getBadgeProgress(badge);
+    if (!badgeDetailCounts || !badge) return;
+    const ids = getBadgeTargetIds(badge);
+    const uniqueIds = Array.from(new Set(ids));
+    const uniqueCount = uniqueIds.length;
+    const watchedCount = currentUser
+      ? uniqueIds.reduce((total, id) => total + (watchedIds.has(id) ? 1 : 0), 0)
+      : null;
+    const globalStats = window.getGlobalMovieStats ? window.getGlobalMovieStats() : {};
+    let totalWins = 0;
+    let totalNominations = 0;
+    uniqueIds.forEach((id) => {
+      const movie = moviesData[id] || {};
+      const key = id ? `id:${id}` : `title:${movie.title || ''}__${movie.year || ''}`;
+      const entry = globalStats[key];
+      if (!entry) return;
+      totalWins += entry.wins || 0;
+      totalNominations += entry.nominations || 0;
+    });
+
+    const moviesPill = window.buildMoviesCountPill
+      ? window.buildMoviesCountPill(uniqueCount, watchedCount, null)
+      : '';
     badgeDetailCounts.innerHTML = `
-      <span class="count-pill">${progress.watchedCount} Watched</span>
-      <span class="count-pill">${progress.totalCount} Total</span>
-    `;
+      <span class="count-pill count-pill--combo">
+        <span class="count-pill-grid">
+          <span class="count-pill-value">${totalWins}</span>
+          <span class="count-pill-value">${totalNominations}</span>
+          <span class="count-pill-label">Oscars</span>
+          <span class="count-pill-label">Nominees</span>
+        </span>
+      </span>
+      ${moviesPill}
+    `.trim();
   }
 
   function isAnyModalOpen() {
@@ -3058,69 +3121,22 @@
   function renderBadgeDetailTable(badge) {
     if (!badgeDetailTable) return;
     const ids = getBadgeTargetIds(badge);
+    const letterRail = document.getElementById('badgeDetailLetterRail');
     if (!ids.length) {
       badgeDetailTable.innerHTML = '<div class="empty-state">No movies found for this badge.</div>';
+      if (letterRail) {
+        letterRail.innerHTML = '';
+      }
       return;
     }
 
-    const rows = ids
-      .map((id) => {
-        const movie = moviesData[id] || {};
-        return {
-          id,
-          title: movie.title || 'Unknown',
-          year: movie.year || '',
-          watched: Boolean(currentUser) && watchedIds.has(id)
-        };
-      })
-      .sort((a, b) => (a.title.localeCompare(b.title) || (parseInt(a.year, 10) || 0) - (parseInt(b.year, 10) || 0)));
-
-    badgeDetailTable.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th class="watched-header">Watched</th>
-            <th>Year</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows
-            .map((movie) => {
-              const statusLabel = currentUser ? (movie.watched ? 'Watched' : 'Not watched') : 'Sign in';
-              const yearLabel = movie.year || '—';
-              return `
-                <tr>
-                  <td>
-                    <button class="movie-link" type="button" data-movie-id="${movie.id}">
-                      ${movie.title}
-                    </button>
-                  </td>
-                  <td class="watched-cell">
-                    <span class="watched-badge" data-movie-id="${movie.id}" aria-hidden="true"></span>
-                    <span class="watched-text">${statusLabel}</span>
-                  </td>
-                  <td>${yearLabel}</td>
-                </tr>
-              `;
-            })
-            .join('')}
-        </tbody>
-      </table>
-    `;
-
-    if (window.updateWatchedBadges) {
-      window.updateWatchedBadges();
+    const moviesList = buildBadgeMovieStats(ids);
+    if (window.renderMoviesTable) {
+      window.renderMoviesTable(badgeDetailTable, moviesList, letterRail);
     }
-
-    badgeDetailTable.querySelectorAll('.movie-link').forEach((button) => {
-      button.addEventListener('click', () => {
-        const movieId = button.getAttribute('data-movie-id');
-        if (movieId && window.openMovieDetail) {
-          window.openMovieDetail(movieId);
-        }
-      });
-    });
+    if (letterRail && window.renderLetterRail) {
+      window.renderLetterRail(letterRail, badgeDetailTable);
+    }
   }
 
   function openBadgeDetail(badge) {

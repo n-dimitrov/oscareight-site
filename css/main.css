@@ -1136,6 +1136,18 @@ footer p + p {
     overflow: hidden;
 }
 
+#moviesModal .modal-card {
+    width: min(960px, 98vw);
+    height: 94vh;
+    max-height: 94vh;
+}
+
+#badgeDetailModal .modal-card {
+    width: min(960px, 98vw);
+    height: 94vh;
+    max-height: 94vh;
+}
+
 .wall-modal {
     position: fixed;
     inset: 0;
@@ -1945,6 +1957,21 @@ footer p + p {
 
 .movie-link:hover {
     color: var(--plum);
+}
+
+.movie-link.best-picture-winner,
+.movie-link.best-picture-winner:hover {
+    color: var(--gold-deep);
+}
+
+.best-picture-star {
+    margin-left: 6px;
+    color: var(--ink-soft);
+    font-size: 0.9em;
+}
+
+.best-picture-star.is-winner {
+    color: var(--gold-deep);
 }
 
 .watched-badge {
