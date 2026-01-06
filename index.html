@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="3Gu5CK-uAJJY2tzYRhDu7x06dXa-0Ww81kn8VcFM9Dg">
     <title>OscarEight - Academy Awards Explorer</title>
-    <link rel="stylesheet" href="css/main.css?v=ana">
+    <link rel="stylesheet" href="css/main.css?v=ana2">
 </head>
 <body>
     <div class="backdrop" aria-hidden="true">
@@ -1978,6 +1978,19 @@
                 if (entry) return entry.nominations;
                 return movie.wins + movie.nominees;
             };
+            const getBestPictureStatus = (movie) => {
+                if (!movie || !movie.year) return { isNominee: false, isWinner: false };
+                const yearData = oscarsData[movie.year];
+                if (!yearData || !yearData['Best Picture']) {
+                    return { isNominee: false, isWinner: false };
+                }
+                const categoryData = yearData['Best Picture'];
+                const matchById = (item) => movie.id && item && item.id === movie.id;
+                const matchByTitle = (item) => !movie.id && item && item.title && movie.title && item.title === movie.title;
+                const isWinner = matchById(categoryData.winner) || matchByTitle(categoryData.winner);
+                const isNominee = isWinner || (categoryData.nominees || []).some(item => matchById(item) || matchByTitle(item));
+                return { isNominee, isWinner };
+            };
             const sorted = [...latestMovieStats].sort((a, b) => {
                 const direction = tableSort.direction === 'asc' ? 1 : -1;
                 if (tableSort.key === 'title') {
@@ -2047,11 +2060,16 @@
                                 const scoreLabel = score === null ? '—' : score.toFixed(1);
                                 const winsCount = getWins(movie);
                                 const totalNominations = getTotalNominations(movie);
+                                const bestPicture = getBestPictureStatus(movie);
+                                const titleClass = bestPicture.isWinner ? 'movie-link best-picture-winner' : 'movie-link';
+                                const star = bestPicture.isNominee
+                                    ? `<span class="best-picture-star${bestPicture.isWinner ? ' is-winner' : ''}">&#9733;</span>`
+                                    : '';
                                 return `
                                     <tr data-letter="${letter}">
                                         <td>
-                                            <button class="movie-link" type="button" data-movie-id="${movie.id || ''}">
-                                                ${titleLabel}
+                                            <button class="${titleClass}" type="button" data-movie-id="${movie.id || ''}">
+                                                ${titleLabel}${star}
                                             </button>
                                         </td>
                                         <td class="watched-cell">
