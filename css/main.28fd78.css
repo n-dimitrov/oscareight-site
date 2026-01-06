@@ -1554,8 +1554,11 @@ footer p + p {
 
 .modal-card.badge-modal-card {
     width: min(1080px, 92vw) !important;
-    height: auto;
+    height: min(80vh, 760px);
+    min-height: min(680px, 80vh);
     max-height: 80vh;
+    resize: both;
+    overflow: auto;
 }
 
 .badge-body {
@@ -1646,6 +1649,11 @@ footer p + p {
     height: 160px;
     text-align: center;
     transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.badge-card * {
+    cursor: pointer;
 }
 
 .badge-card:hover {
@@ -1712,6 +1720,11 @@ footer p + p {
     color: var(--ink-soft);
     opacity: 0.8;
     text-align: left;
+}
+
+.badge-subtitle-winners {
+    color: var(--gold) !important;
+    opacity: 1;
 }
 
 .badge-count {
