@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="3Gu5CK-uAJJY2tzYRhDu7x06dXa-0Ww81kn8VcFM9Dg">
     <title>OscarEight - Academy Awards Explorer</title>
-    <link rel="stylesheet" href="css/main.28fd78.css">
+    <link rel="stylesheet" href="css/main.css?v=ana">
 </head>
 <body>
     <div class="backdrop" aria-hidden="true">
@@ -2973,11 +2973,13 @@
       const dashOffset = circumference - (percentage / 100) * circumference;
       
       const statusClass = progress.isComplete ? 'is-earned' : (progress.watchedCount > 0 ? 'is-in-progress' : 'is-locked');
+      const subtitleText = badge.subtitle || '';
+      const isWinnersSubtitle = typeof subtitleText === 'string' && subtitleText.toLowerCase().includes('winners');
       
       return `
         <div class="badge-card ${statusClass}" data-badge-id="${badge.id}" role="button" tabindex="0">
           <div class="badge-header">
-            <div class="badge-subtitle">${badge.subtitle}</div>
+            <div class="badge-subtitle${isWinnersSubtitle ? ' badge-subtitle-winners' : ''}"${isWinnersSubtitle ? ' style="color: var(--gold); opacity: 1;"' : ''}>${subtitleText}</div>
             <div class="badge-count">${countLabel}</div>
           </div>
           <div class="badge-ring-container">
@@ -2996,15 +2998,22 @@
       `;
     }).join('');
     
-    // Add placeholders to fill the last row
-    // With scrollbar always visible, we have consistent width
+    // Add placeholders to fill the grid to a minimum height (3 rows).
+    // With scrollbar always visible, we have consistent width.
     const badgeCount = filteredBadges.length;
     const badgesPerRow = 6; // Fixed: modal width allows 6 badges with scrollbar
-    const remainder = badgeCount % badgesPerRow;
-    const placeholdersNeeded = remainder > 0 ? badgesPerRow - remainder : 0;
-    const placeholders = Array(placeholdersNeeded).fill('<div class="badge-placeholder"></div>').join('');
-    
-    badgesGrid.innerHTML = (cards + placeholders) || '<div class="empty-state">No badges match the filters.</div>';
+    const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+    const minRows = isMobile ? 0 : 3;
+    if (badgeCount === 0) {
+      badgesGrid.innerHTML = '<div class="empty-state">No badges match the filters.</div>';
+    } else {
+      const minSlots = badgesPerRow * minRows;
+      const targetCount = Math.max(badgeCount, minSlots);
+      const rows = Math.ceil(targetCount / badgesPerRow);
+      const placeholdersNeeded = rows * badgesPerRow - badgeCount;
+      const placeholders = Array(placeholdersNeeded).fill('<div class="badge-placeholder"></div>').join('');
+      badgesGrid.innerHTML = cards + placeholders;
+    }
     
     if (badgesSummary) {
       badgesSummary.textContent = `${earnedCount}/${badgeDefinitions.length} earned`;
