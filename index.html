@@ -2235,6 +2235,8 @@
   let currentMovieId = null;
   let currentMovieData = null;
   let currentBadgeDetailId = null;
+  let previousEarnedBadgeIds = new Set();
+  let celebrateEarnedBadgesNextRender = false;
   let providersRequestId = 0;
   let badgeFilters = {
     status: 'earned',
@@ -2936,12 +2938,23 @@
       if (badgeFilterCount) {
         badgeFilterCount.textContent = '';
       }
+      previousEarnedBadgeIds = new Set();
       return;
     }
 
+    const progressMap = new Map();
+    const earnedNow = new Set();
+    badgeDefinitions.forEach((badge) => {
+      const progress = getBadgeProgress(badge);
+      progressMap.set(badge.id, progress);
+      if (progress.isComplete) {
+        earnedNow.add(badge.id);
+      }
+    });
+
     // Apply filters
     const filteredBadges = badgeDefinitions.filter((badge) => {
-      const progress = getBadgeProgress(badge);
+      const progress = progressMap.get(badge.id);
       
       // Status filter
       if (badgeFilters.status !== 'all') {
@@ -2971,7 +2984,7 @@
 
     let earnedCount = 0;
     const cards = filteredBadges.map((badge) => {
-      const progress = getBadgeProgress(badge);
+      const progress = progressMap.get(badge.id);
       if (progress.isComplete) {
         earnedCount += 1;
       }
@@ -3038,6 +3051,9 @@
       badgeFilterCount.textContent = `Showing ${filteredBadges.length} of ${badgeDefinitions.length}`;
     }
 
+    // Note: Celebration logic moved to checkAndCelebrateBadges()
+    // renderBadges() now only handles UI rendering
+
     badgesGrid.querySelectorAll('.badge-card[data-badge-id]').forEach((card) => {
       const badgeId = card.dataset.badgeId;
       if (!badgeId) return;
@@ -3055,6 +3071,102 @@
         }
       });
     });
+  }
+
+  function checkAndCelebrateBadges() {
+    if (!currentUser) return;
+    if (!badgeDefinitions || badgeDefinitions.length === 0) return;
+    
+    // Always recalculate which badges are currently earned
+    const earnedNow = new Set();
+    badgeDefinitions.forEach((badge) => {
+      const progress = getBadgeProgress(badge);
+      if (progress.isComplete) {
+        earnedNow.add(badge.id);
+      }
+    });
+    
+    // Only check for newly earned and celebrate if the flag is set
+    if (celebrateEarnedBadgesNextRender) {
+      const newlyEarnedIds = Array.from(earnedNow).filter((id) => !previousEarnedBadgeIds.has(id));
+      
+      if (newlyEarnedIds.length > 0) {
+        const newlyEarnedBadges = newlyEarnedIds
+          .map((id) => badgeDefinitions.find((entry) => entry.id === id))
+          .filter(Boolean);
+        showBadgeCelebration(newlyEarnedBadges);
+      }
+    }
+    
+    // Always update previousEarnedBadgeIds to current state
+    previousEarnedBadgeIds = earnedNow;
+    celebrateEarnedBadgesNextRender = false;
+  }
+
+  function initializePreviousEarnedBadges() {
+    // Initialize previousEarnedBadgeIds with currently earned badges
+    // This prevents celebrating already-earned badges on first interaction
+    if (!badgeDefinitions || badgeDefinitions.length === 0) return;
+    
+    previousEarnedBadgeIds = new Set();
+    badgeDefinitions.forEach((badge) => {
+      const progress = getBadgeProgress(badge);
+      if (progress.isComplete) {
+        previousEarnedBadgeIds.add(badge.id);
+      }
+    });
+  }
+
+  function showBadgeCelebration(badges) {
+    if (!badges || badges.length === 0) return;
+    const target = watchedToggle || document.body;
+    const rect = watchedToggle ? watchedToggle.getBoundingClientRect() : null;
+    const container = document.createElement('div');
+    container.className = 'badge-celebration';
+    
+    // Format badge details: "Title · Subtitle · Period"
+    const formatBadge = (badge) => {
+      const parts = [];
+      if (badge.title) parts.push(badge.title);
+      if (badge.subtitle) parts.push(badge.subtitle);
+      if (badge.periodLabel) parts.push(badge.periodLabel);
+      return parts.join(' · ');
+    };
+    
+    const title = badges.length === 1 ? 'Badge earned' : `${badges.length} Badges earned`;
+    const badgeLabels = badges.map(formatBadge).map(text => `<div class="badge-celebration-item">${text}</div>`).join('');
+    
+    container.innerHTML = `
+      <div class="badge-celebration-fireworks"></div>
+      <div class="badge-celebration-card" role="status" aria-live="polite">
+        <div class="badge-celebration-title">${title}</div>
+        <div class="badge-celebration-labels">${badgeLabels}</div>
+      </div>
+    `;
+    document.body.appendChild(container);
+    if (rect) {
+      const top = Math.max(12, rect.top - 10);
+      const left = Math.min(window.innerWidth - 260, rect.left + rect.width / 2 - 120);
+      container.style.top = `${top}px`;
+      container.style.left = `${left}px`;
+      container.style.transform = 'translate(0, -20px) scale(0.98)';
+      container.style.transformOrigin = 'center';
+      container.style.zIndex = '10000';
+    } else {
+      container.style.zIndex = '10000';
+    }
+    requestAnimationFrame(() => {
+      if (rect) {
+        container.style.transform = 'translate(0, -40px) scale(1)';
+      }
+      container.classList.add('is-active');
+    });
+    window.setTimeout(() => {
+      container.classList.remove('is-active');
+    }, 3000);
+    window.setTimeout(() => {
+      container.remove();
+    }, 3500);
   }
 
   function buildBadgeMovieStats(ids) {
@@ -3296,6 +3408,8 @@
     }
     updateWatchedToggle();
     updateWatchedBadges();
+    // Initialize previousEarnedBadgeIds after watched IDs are loaded
+    initializePreviousEarnedBadges();
     if (window.updateResultsCount) {
       window.updateResultsCount();
     }
@@ -3409,10 +3523,15 @@
       if (isWatched) {
         await deleteDoc(docRef);
         watchedIds.delete(currentMovieId);
+        // Don't celebrate when unwatching - just recalculate
+        celebrateEarnedBadgesNextRender = false;
       } else {
         await setDoc(docRef, { watched: true }, { merge: true });
         watchedIds.add(currentMovieId);
+        // Only celebrate when watching (potentially earning badges)
+        celebrateEarnedBadgesNextRender = true;
       }
+      checkAndCelebrateBadges();
       updateWatchedToggle();
       updateWatchedBadges();
       if (window.updateResultsCount) {
