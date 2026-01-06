@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="3Gu5CK-uAJJY2tzYRhDu7x06dXa-0Ww81kn8VcFM9Dg">
-    <title>OscarEight - Academy Awards Explorer</title>
+    <title>OscarEight — Explore Oscar Winners & Nominees Since 1977</title>
+    <meta property="og:title" content="OscarEight — Explore Oscar Winners & Nominees Since 1977" />
+    <meta property="og:description" content="Track Oscar winners and nominees, complete years and decades, and earn meaningful badges for the Big 8 categories." />
+    <meta property="og:url" content="https://oscareight.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://oscareight.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <link rel="stylesheet" href="css/main.css?v=ana2">
 </head>
 <body>
@@ -32,6 +39,10 @@
                 <div id="userDropdown" class="user-dropdown">
                     <div class="dropdown-item" style="font-weight: 600;" id="userDropdownName"></div>
                     <div class="dropdown-item" style="font-weight: 600;" id="userEmail"></div>
+                    <div class="dropdown-item supporter-row" id="userSupporterRow" style="display: none;">
+                        <span class="supporter-heart" aria-hidden="true">❤</span>
+                        <span class="supporter-label">Supporter</span>
+                    </div>
                     <div class="dropdown-item country-row" style="font-weight: 600;">
                         <span id="userCountry"></span>
                         <button id="userCountryToggle" class="country-toggle" type="button">Change</button>
@@ -218,6 +229,9 @@
             </div>
             <div class="modal-body badge-body">
                 <div id="badgesGrid" class="badge-grid"></div>
+            </div>
+            <div class="badge-support" id="badgeSupport" aria-label="Support this project">
+                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="oscareight" data-color="#f0dfb9" data-emoji="☕" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#FFDD00"></script>
             </div>
         </div>
     </div>
@@ -2196,6 +2210,7 @@
   const userCountry = document.getElementById('userCountry');
   const userCountrySelect = document.getElementById('userCountrySelect');
   const userCountryToggle = document.getElementById('userCountryToggle');
+  const userSupporterRow = document.getElementById('userSupporterRow');
   const authModal = document.getElementById('authModal');
   const closeAuthModal = document.getElementById('closeAuthModal');
   const googleSignInButton = document.getElementById('googleSignInButton');
@@ -2208,6 +2223,7 @@
   const badgeTypeFilter = document.getElementById('badgeTypeFilter');
   const badgeVariantFilter = document.getElementById('badgeVariantFilter');
   const badgeFilterCount = document.getElementById('badgeFilterCount');
+  const badgeSupport = document.getElementById('badgeSupport');
   const badgeDetailModal = document.getElementById('badgeDetailModal');
   const badgeDetailClose = document.getElementById('badgeDetailClose');
   const badgeDetailTitle = document.getElementById('badgeDetailTitle');
@@ -2332,8 +2348,53 @@
     }
   }
 
-  async function loadUserBadgePreference(user) {
+  async function loadUserProfile(user) {
+    if (!user) return null;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const snapshot = await getDoc(userRef);
+      const data = snapshot.exists() ? snapshot.data() : {};
+      const updates = {};
+      const profile = { ...data };
+
+      if (!profile.badges) {
+        profile.badges = 'b8w';
+        updates.badges = profile.badges;
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(profile, 'supporter')) {
+        profile.supporter = false;
+        updates.supporter = profile.supporter;
+      }
+
+      if (!(profile.countryCode && profile.countryName)) {
+        const legacyCode = profile.country ? profile.country : null;
+        const countryCode = legacyCode || getCountryFromLocale();
+        const countryName = countryCode ? countryByCode.get(countryCode) : null;
+        if (countryCode && countryName) {
+          profile.countryCode = countryCode;
+          profile.countryName = countryName;
+          updates.countryCode = countryCode;
+          updates.countryName = countryName;
+          updates.countrySource = 'locale';
+          updates.countryUpdatedAt = new Date().toISOString();
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await setDoc(userRef, updates, { merge: true });
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Profile load error:', error);
+      return null;
+    }
+  }
+
+  async function loadUserBadgePreference(user, profile) {
     if (!user) return 'b8w';
+    if (profile) return profile.badges || 'b8w';
     try {
       const userRef = doc(db, 'users', user.uid);
       const snapshot = await getDoc(userRef);
@@ -2568,14 +2629,19 @@
     }
   }
 
-  async function loadUserCountry(user) {
+  async function loadUserCountry(user, profile) {
     if (!user || !userCountry) return;
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const snapshot = await getDoc(userRef);
-      const data = snapshot.exists() ? snapshot.data() : null;
-      const storedCode = data && (data.countryCode || data.country) ? (data.countryCode || data.country) : null;
-      const storedName = data && data.countryName ? data.countryName : null;
+      let resolvedData = profile;
+      if (!resolvedData) {
+        const userRef = doc(db, 'users', user.uid);
+        const snapshot = await getDoc(userRef);
+        resolvedData = snapshot.exists() ? snapshot.data() : null;
+      }
+      const storedCode = resolvedData && (resolvedData.countryCode || resolvedData.country)
+        ? (resolvedData.countryCode || resolvedData.country)
+        : null;
+      const storedName = resolvedData && resolvedData.countryName ? resolvedData.countryName : null;
       const detectedCode = getCountryFromLocale();
       const detectedName = detectedCode ? countryByCode.get(detectedCode) : null;
       const normalizedStoredName = storedCode ? (storedName || countryByCode.get(storedCode)) : null;
@@ -2593,6 +2659,23 @@
       console.error('Country load error:', error);
       updateCountryDisplay(null, null);
       populateCountrySelect('');
+    }
+  }
+
+  async function loadUserSupporter(user, profile) {
+    if (!user || !userSupporterRow) return;
+    try {
+      let resolvedData = profile;
+      if (!resolvedData) {
+        const userRef = doc(db, 'users', user.uid);
+        const snapshot = await getDoc(userRef);
+        resolvedData = snapshot.exists() ? snapshot.data() : null;
+      }
+      const isSupporter = Boolean(resolvedData && resolvedData.supporter);
+      userSupporterRow.style.display = isSupporter ? 'flex' : 'none';
+    } catch (error) {
+      console.error('Supporter load error:', error);
+      userSupporterRow.style.display = 'none';
     }
   }
 
@@ -2938,6 +3021,9 @@
       if (badgeFilterCount) {
         badgeFilterCount.textContent = '';
       }
+      if (badgeSupport) {
+        badgeSupport.style.display = 'none';
+      }
       previousEarnedBadgeIds = new Set();
       return;
     }
@@ -2951,6 +3037,16 @@
         earnedNow.add(badge.id);
       }
     });
+    if (badgeSupport) {
+      badgeSupport.style.display = earnedNow.size >= 3 ? 'flex' : 'none';
+      const supportButton = badgeSupport.querySelector('.bmc-button');
+      if (supportButton) {
+        supportButton.setAttribute('title', 'Support OscarEight');
+        supportButton.setAttribute('aria-label', 'Support OscarEight');
+      } else {
+        badgeSupport.setAttribute('title', 'Support OscarEight');
+      }
+    }
 
     // Apply filters
     const filteredBadges = badgeDefinitions.filter((badge) => {
@@ -3560,9 +3656,10 @@
     if (user) {
       // User is signed in
       currentUser = user;
+      const profile = await loadUserProfile(user);
       
       // Load user's badge key
-      const badgeKey = await loadUserBadgePreference(user);
+      const badgeKey = await loadUserBadgePreference(user, profile);
       currentBadgeFile = `badges-${badgeKey}`;
       
       // Load the badge definitions
@@ -3573,8 +3670,8 @@
         badgesButton.textContent = `Badges (${badgeKey})`;
       }
       
-      await ensureUserCountry(user);
-      await loadUserCountry(user);
+      await loadUserCountry(user, profile);
+      await loadUserSupporter(user, profile);
       loadWatchedIds(user);
       signInButton.style.display = 'none';
       userMenu.style.display = 'block';
@@ -3608,6 +3705,9 @@
       }
       if (userCountrySelect) {
         userCountrySelect.innerHTML = '';
+      }
+      if (userSupporterRow) {
+        userSupporterRow.style.display = 'none';
       }
       if (window.updateResultsCount) {
         window.updateResultsCount();
