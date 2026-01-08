@@ -125,6 +125,14 @@
                 </select>
             </div>
             <div class="control-group">
+                <button id="big8Button" class="big8-button" type="button" disabled>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2;">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    View Big 8 Winners
+                </button>
+            </div>
+            <div class="control-group">
                 <label for="categorySelect" class="field-label">Filter by Category</label>
                 <select id="categorySelect">
                     <option value="">All Categories</option>
@@ -327,6 +335,32 @@
             <div id="postersWallGrid" class="wall-grid"></div>
             <div id="postersWallTooltip" class="wall-poster-tooltip-overlay" aria-live="polite"></div>
             <div id="postersWallCountdown" class="wall-countdown" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <!-- Big 8 Winners Modal -->
+    <div id="big8Modal" class="big8-modal" aria-hidden="true">
+        <button class="modal-close" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="6" y1="18" x2="18" y2="6"></line>
+            </svg>
+        </button>
+        <div class="big8-modal-overlay" role="dialog" aria-modal="true" aria-label="Big 8 Winners dialog">
+            <div class="big8-modal-container">
+                <div class="big8-modal-body">
+                    <div class="big8-page">
+                        <header class="big8-header">
+                            <h1 class="big8-title">The Big 8 Winners</h1>
+                            <div class="big8-deck" id="big8Year">Films of <span id="big8YearValue"></span></div>
+                        </header>
+
+                        <section class="big8-grid" aria-label="Big 8 winners" id="big8Grid">
+                            <!-- Content will be populated dynamically -->
+                        </section>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -603,6 +637,7 @@
             document.getElementById('yearSelect').addEventListener('change', (e) => {
                 state.selectedYear = e.target.value || null;
                 render();
+                updateBig8Button();
             });
 
             document.getElementById('categorySelect').addEventListener('change', (e) => {
@@ -618,6 +653,15 @@
             document.getElementById('toggleNominees').addEventListener('change', (e) => {
                 state.showNominees = e.target.checked;
                 render();
+            });
+
+            // Big 8 Modal Event Listeners
+            document.getElementById('big8Button').addEventListener('click', openBig8Modal);
+            document.getElementById('big8Modal').querySelector('.modal-close').addEventListener('click', closeBig8Modal);
+            document.getElementById('big8Modal').addEventListener('click', (e) => {
+                if (e.target.id === 'big8Modal' || e.target.classList.contains('big8-modal-overlay')) {
+                    closeBig8Modal();
+                }
             });
 
             document.getElementById('resultsCount').addEventListener('click', (e) => {
@@ -1831,6 +1875,92 @@
             modal.classList.remove('is-open');
             modal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('modal-open');
+        }
+
+        // Big 8 Modal Functions
+        function updateBig8Button() {
+            const button = document.getElementById('big8Button');
+            if (state.selectedYear && state.selectedYear !== '') {
+                button.disabled = false;
+            } else {
+                button.disabled = true;
+            }
+        }
+
+        function openBig8Modal() {
+            if (!state.selectedYear) return;
+            
+            const yearData = oscarsData[state.selectedYear];
+            if (!yearData) {
+                alert('No data available for this year');
+                return;
+            }
+
+            populateBig8Modal(state.selectedYear, yearData);
+            
+            const modal = document.getElementById('big8Modal');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeBig8Modal() {
+            const modal = document.getElementById('big8Modal');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+        }
+
+        function populateBig8Modal(year, yearData) {
+            document.getElementById('big8YearValue').textContent = year;
+            
+            const grid = document.getElementById('big8Grid');
+            
+            const categories = [
+                { label: 'Best Supporting Actor', area: 'supporting-actor' },
+                { label: 'Best Director', area: 'director' },
+                { label: 'Best Supporting Actress', area: 'supporting-actress' },
+                { label: 'Best Actor', area: 'best-actor' },
+                { label: 'Best Picture', area: 'best-picture', center: true },
+                { label: 'Best Actress', area: 'best-actress' },
+                { label: 'Best Original Screenplay', area: 'original' },
+                { label: 'Best Adapted Screenplay', area: 'adapted' }
+            ];
+
+            let html = '';
+
+            for (const config of categories) {
+                const categoryData = yearData[config.label];
+                const winner = categoryData?.winner;
+
+                if (!winner) continue;
+
+                const posterUrl = getPosterUrl(winner.id);
+
+                const centerClass = config.center ? ' big8-card--center' : '';
+                
+                // Get the person/people names
+                const personText = winner.names ? winner.names.join(', ') : (winner.person || '');
+                
+                html += `
+                    <article class="big8-card big8-card--${config.area}${centerClass}">
+                        <div class="big8-label">${config.label}</div>
+                        <div class="big8-poster">
+                            <img src="${posterUrl}" alt="${winner.title} poster" loading="lazy" />
+                        </div>
+                        <div class="big8-details">
+                            <div class="big8-movie-title">${winner.title}</div>
+                            <div class="big8-person">${personText}</div>
+                        </div>
+                    </article>
+                `;
+            }
+
+            // Add the year display element
+            html = html.replace(
+                '<article class="big8-card big8-card--best-actor',
+                `<div class="big8-year">${year}</div><article class="big8-card big8-card--best-actor`
+            );
+
+            grid.innerHTML = html;
         }
 
         function setupLazyPosters() {
