@@ -707,6 +707,33 @@
                 };
                 big8Modal.addEventListener('mousemove', big8Activity);
                 big8Modal.addEventListener('touchstart', big8Activity, { passive: true });
+                
+                // Swipe gesture support for mobile
+                let touchStartX = 0;
+                let touchEndX = 0;
+                const minSwipeDistance = 50;
+                
+                const handleSwipe = () => {
+                    const swipeDistance = touchEndX - touchStartX;
+                    if (Math.abs(swipeDistance) < minSwipeDistance) return;
+                    
+                    if (swipeDistance > 0) {
+                        // Swipe right = previous year
+                        stepBig8Year(-1);
+                    } else {
+                        // Swipe left = next year
+                        stepBig8Year(1);
+                    }
+                };
+                
+                big8Modal.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, { passive: true });
+                
+                big8Modal.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, { passive: true });
             }
 
             document.getElementById('resultsCount').addEventListener('click', (e) => {

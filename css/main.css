@@ -2937,7 +2937,7 @@ footer p + p {
 
 .big8-title {
     font-family: "Fraunces", "Garamond", "Times New Roman", serif;
-    font-size: clamp(1.8rem, 3.6vw, 2.8rem);
+    font-size: clamp(1.6rem, 3.2vw, 2.4rem);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #f7d37c;
@@ -3208,7 +3208,7 @@ footer p + p {
     }
 
     .big8-title {
-        font-size: clamp(1.15rem, 4.8vw, 1.75rem);
+        font-size: clamp(1rem, 4.2vw, 1.5rem);
         letter-spacing: 0.03em;
         gap: 6px;
     }
@@ -3312,7 +3312,7 @@ footer p + p {
 
 @media (max-width: 420px) {
     .big8-title {
-        font-size: clamp(1.15rem, 6vw, 1.6rem);
+        font-size: clamp(1rem, 5.5vw, 1.4rem);
         gap: 6px;
     }
 
