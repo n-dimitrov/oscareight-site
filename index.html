@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://oscareight.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <link rel="stylesheet" href="css/main.css?v=ana5">
+    <link rel="stylesheet" href="css/main.css?v=ana6">
 </head>
 <body>
     <div class="backdrop" aria-hidden="true">
@@ -371,7 +371,6 @@
                     <div class="big8-page">
                         <header class="big8-header">
                             <h1 class="big8-title">The Big 8 Winners</h1>
-                            <div class="big8-deck" id="big8Year">Films of <span id="big8YearValue"></span></div>
                         </header>
 
                         <section class="big8-grid" aria-label="Big 8 winners" id="big8Grid">
@@ -2127,8 +2126,6 @@
         }
 
         function populateBig8Modal(year, yearData) {
-            document.getElementById('big8YearValue').textContent = year;
-            
             const grid = document.getElementById('big8Grid');
             
             const categories = [
