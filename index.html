@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://oscareight.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <link rel="stylesheet" href="css/main.css?v=ana2">
+    <link rel="stylesheet" href="css/main.css?v=ana5">
 </head>
 <body>
     <div class="backdrop" aria-hidden="true">
@@ -348,6 +348,25 @@
         </button>
         <div class="big8-modal-overlay" role="dialog" aria-modal="true" aria-label="Big 8 Winners dialog">
             <div class="big8-modal-container">
+                <div class="wall-controls big8-controls" role="toolbar" aria-label="Big 8 controls">
+                    <button id="big8Play" class="wall-control" type="button" aria-label="Play years" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <polygon points="9 7 17 12 9 17"></polygon>
+                        </svg>
+                    </button>
+                    <button id="big8Fullscreen" class="wall-control" type="button" aria-label="Toggle fullscreen">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M8 3H3v5"></path>
+                            <path d="M3 3l6 6"></path>
+                            <path d="M16 3h5v5"></path>
+                            <path d="M21 3l-6 6"></path>
+                            <path d="M3 16v5h5"></path>
+                            <path d="M3 21l6-6"></path>
+                            <path d="M21 16v5h-5"></path>
+                            <path d="M21 21l-6-6"></path>
+                        </svg>
+                    </button>
+                </div>
                 <div class="big8-modal-body">
                     <div class="big8-page">
                         <header class="big8-header">
@@ -401,6 +420,9 @@
         let postersWallIsShuffling = false;
         let postersWallActiveWrap = null;
         const postersWallScale = 0.98;
+        let big8IsPlaying = false;
+        let big8AutoAdvanceTimer = null;
+        let big8Years = null;
 
         let latestMovieStats = [];
         let latestWinnerCount = 0;
@@ -661,8 +683,31 @@
             document.getElementById('big8Modal').addEventListener('click', (e) => {
                 if (e.target.id === 'big8Modal' || e.target.classList.contains('big8-modal-overlay')) {
                     closeBig8Modal();
+                    return;
                 }
+                if (big8IsPlaying) {
+                    resetBig8AutoAdvance();
+                }
+                toggleBig8Ui();
             });
+            const big8PlayButton = document.getElementById('big8Play');
+            if (big8PlayButton) {
+                big8PlayButton.addEventListener('click', toggleBig8Play);
+            }
+            const big8FullscreenButton = document.getElementById('big8Fullscreen');
+            if (big8FullscreenButton) {
+                big8FullscreenButton.addEventListener('click', toggleBig8Fullscreen);
+            }
+            const big8Modal = document.getElementById('big8Modal');
+            if (big8Modal) {
+                const big8Activity = () => {
+                    if (big8IsPlaying) {
+                        resetBig8AutoAdvance();
+                    }
+                };
+                big8Modal.addEventListener('mousemove', big8Activity);
+                big8Modal.addEventListener('touchstart', big8Activity, { passive: true });
+            }
 
             document.getElementById('resultsCount').addEventListener('click', (e) => {
                 if (e.target && e.target.id === 'moviesCountButton') {
@@ -685,7 +730,10 @@
                 }
             });
 
-            document.addEventListener('fullscreenchange', updatePostersWallFullscreenState);
+            document.addEventListener('fullscreenchange', () => {
+                updatePostersWallFullscreenState();
+                updateBig8FullscreenState();
+            });
 
             const postersWallModal = document.getElementById('postersWallModal');
             const postersWallClose = document.querySelector('.wall-modal-close');
@@ -732,6 +780,18 @@
                     closePostersWall();
                     closeBadgesModal();
                     closeBadgeDetail();
+                }
+                if (e.key === 'ArrowRight') {
+                    if (isBig8ModalOpen()) {
+                        e.preventDefault();
+                        stepBig8Year(1);
+                    }
+                }
+                if (e.key === 'ArrowLeft') {
+                    if (isBig8ModalOpen()) {
+                        e.preventDefault();
+                        stepBig8Year(-1);
+                    }
                 }
             });
 
@@ -1901,12 +1961,169 @@
             const modal = document.getElementById('big8Modal');
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
+            if (big8IsPlaying) {
+                resetBig8AutoAdvance();
+            }
         }
 
         function closeBig8Modal() {
             const modal = document.getElementById('big8Modal');
             modal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('modal-open');
+            stopBig8Play();
+            if (document.fullscreenElement && modal.contains(document.fullscreenElement)) {
+                document.exitFullscreen();
+            }
+        }
+
+        function getBig8Years() {
+            if (!big8Years) {
+                big8Years = Object.keys(oscarsData)
+                    .map(Number)
+                    .sort((a, b) => a - b)
+                    .map(String);
+            }
+            return big8Years;
+        }
+
+        function setSelectedYear(year) {
+            state.selectedYear = year;
+            const yearSelect = document.getElementById('yearSelect');
+            if (yearSelect) {
+                yearSelect.value = year;
+            }
+            render();
+            updateBig8Button();
+        }
+
+        function advanceBig8Year() {
+            stepBig8Year(1);
+        }
+
+        function stepBig8Year(delta) {
+            const years = getBig8Years();
+            if (!years.length) return;
+            const currentYear = state.selectedYear ? String(state.selectedYear) : years[0];
+            const currentIndex = years.indexOf(currentYear);
+            const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+            const nextIndex = (safeIndex + delta + years.length) % years.length;
+            const nextYear = years[nextIndex];
+            const yearData = oscarsData[nextYear];
+            if (!yearData) return;
+            setSelectedYear(nextYear);
+            populateBig8Modal(nextYear, yearData);
+            if (big8IsPlaying) {
+                resetBig8AutoAdvance();
+            }
+        }
+
+        function isBig8ModalOpen() {
+            const modal = document.getElementById('big8Modal');
+            return modal && modal.getAttribute('aria-hidden') === 'false';
+        }
+
+        function resetBig8AutoAdvance() {
+            if (big8AutoAdvanceTimer) {
+                clearTimeout(big8AutoAdvanceTimer);
+            }
+            big8AutoAdvanceTimer = window.setTimeout(() => {
+                advanceBig8Year();
+                resetBig8AutoAdvance();
+            }, 30000);
+        }
+
+        function updateBig8PlayUi() {
+            const button = document.getElementById('big8Play');
+            if (!button) return;
+            button.classList.toggle('is-active', big8IsPlaying);
+            button.setAttribute('aria-pressed', big8IsPlaying ? 'true' : 'false');
+            button.setAttribute('aria-label', big8IsPlaying ? 'Pause years' : 'Play years');
+            if (big8IsPlaying) {
+                button.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="7" y="6" width="3" height="12"></rect>
+                        <rect x="14" y="6" width="3" height="12"></rect>
+                    </svg>
+                `.trim();
+            } else {
+                button.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <polygon points="9 7 17 12 9 17"></polygon>
+                    </svg>
+                `.trim();
+            }
+        }
+
+        function stopBig8Play() {
+            big8IsPlaying = false;
+            if (big8AutoAdvanceTimer) {
+                clearTimeout(big8AutoAdvanceTimer);
+                big8AutoAdvanceTimer = null;
+            }
+            updateBig8PlayUi();
+        }
+
+        function toggleBig8Play() {
+            big8IsPlaying = !big8IsPlaying;
+            updateBig8PlayUi();
+            if (big8IsPlaying) {
+                resetBig8AutoAdvance();
+            } else {
+                if (big8AutoAdvanceTimer) {
+                    clearTimeout(big8AutoAdvanceTimer);
+                    big8AutoAdvanceTimer = null;
+                }
+            }
+        }
+
+        function startBig8Play() {
+            if (big8IsPlaying) return;
+            big8IsPlaying = true;
+            updateBig8PlayUi();
+            resetBig8AutoAdvance();
+        }
+
+        function toggleBig8Fullscreen() {
+            const modal = document.getElementById('big8Modal');
+            if (!modal) return;
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                modal.requestFullscreen();
+                startBig8Play();
+            }
+        }
+
+        function updateBig8FullscreenState() {
+            const button = document.getElementById('big8Fullscreen');
+            if (!button) return;
+            if (document.fullscreenElement && document.getElementById('big8Modal')?.contains(document.fullscreenElement)) {
+                button.classList.add('is-active');
+            } else {
+                button.classList.remove('is-active');
+            }
+        }
+
+        function hideBig8Ui() {
+            const modal = document.getElementById('big8Modal');
+            if (!modal) return;
+            modal.classList.add('is-ui-hidden');
+        }
+
+        function showBig8Ui() {
+            const modal = document.getElementById('big8Modal');
+            if (!modal) return;
+            modal.classList.remove('is-ui-hidden');
+        }
+
+        function toggleBig8Ui() {
+            const modal = document.getElementById('big8Modal');
+            if (!modal) return;
+            if (modal.classList.contains('is-ui-hidden')) {
+                showBig8Ui();
+            } else {
+                hideBig8Ui();
+            }
         }
 
         function populateBig8Modal(year, yearData) {

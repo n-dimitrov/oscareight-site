@@ -2815,6 +2815,32 @@ footer p + p {
     animation: big8Rise 0.5s ease-out;
 }
 
+.big8-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.big8-modal .big8-controls {
+    transition: opacity 0.2s ease;
+}
+
+.big8-modal .modal-close {
+    transition: opacity 0.2s ease;
+}
+
+.big8-modal.is-ui-hidden .big8-controls {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.big8-modal.is-ui-hidden .modal-close {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .big8-modal-body {
     padding: 6px 8px 10px;
     overflow: auto;
@@ -2966,7 +2992,7 @@ footer p + p {
 
 .big8-card--center .big8-poster {
     margin: 0 auto 12px;
-    width: clamp(140px, 28vw, 220px);
+    width: 96px;
     aspect-ratio: 2 / 3;
     border: 1px solid rgba(255, 210, 130, 0.6);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
@@ -3027,6 +3053,10 @@ footer p + p {
     aspect-ratio: 2 / 3;
     border: 1px solid rgba(255, 210, 130, 0.6);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}
+
+.big8-card--center .big8-poster {
+    width: 96px;
 }
 
 .big8-card .big8-poster img {
@@ -3190,6 +3220,10 @@ footer p + p {
         grid-row: 2;
         margin: 0 auto 8px;
         width: clamp(110px, 45vw, 160px);
+    }
+
+    .big8-card--center .big8-poster {
+        width: clamp(132px, 54vw, 192px);
     }
 
     .big8-card .big8-details {
