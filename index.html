@@ -125,14 +125,6 @@
                 </select>
             </div>
             <div class="control-group">
-                <button id="big8Button" class="big8-button" type="button" disabled>
-                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2;">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                    View Big 8 Winners
-                </button>
-            </div>
-            <div class="control-group">
                 <label for="categorySelect" class="field-label">Filter by Category</label>
                 <select id="categorySelect">
                     <option value="">All Categories</option>
@@ -659,7 +651,6 @@
             document.getElementById('yearSelect').addEventListener('change', (e) => {
                 state.selectedYear = e.target.value || null;
                 render();
-                updateBig8Button();
             });
 
             document.getElementById('categorySelect').addEventListener('change', (e) => {
@@ -678,7 +669,6 @@
             });
 
             // Big 8 Modal Event Listeners
-            document.getElementById('big8Button').addEventListener('click', openBig8Modal);
             document.getElementById('big8Modal').querySelector('.modal-close').addEventListener('click', closeBig8Modal);
             document.getElementById('big8Modal').addEventListener('click', (e) => {
                 if (e.target.id === 'big8Modal' || e.target.classList.contains('big8-modal-overlay')) {
@@ -744,6 +734,15 @@
             });
 
             document.getElementById('resultsContainer').addEventListener('click', (e) => {
+                if (e.target.classList.contains('big8-badge')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const year = e.target.dataset.year;
+                    if (year) {
+                        openBig8ModalForYear(year);
+                    }
+                    return;
+                }
                 const button = e.target.closest('.movie-link');
                 if (button && button.dataset.movieId) {
                     openMovieDetail(button.dataset.movieId);
@@ -1789,9 +1788,27 @@
                     }
                 }
 
+                const big8Categories = [
+                    'Best Picture',
+                    'Best Director',
+                    'Best Actor',
+                    'Best Actress',
+                    'Best Supporting Actor',
+                    'Best Supporting Actress',
+                    'Best Original Screenplay',
+                    'Best Adapted Screenplay'
+                ];
+                const isBig8Category = big8Categories.includes(item.category);
+                const big8Badge = isBig8Category
+                    ? `<button class="big8-badge" type="button" aria-label="View Big 8 Winners" title="Click to view Big 8 Winners" data-year="${item.year}">★</button>`
+                    : '';
+
                 html += `
                     <div class="category-item">
-                        <div class="category-name">${item.category}</div>
+                        <div class="category-name-wrapper">
+                            <div class="category-name">${item.category}</div>
+                            ${big8Badge}
+                        </div>
                         <div class="year-display">${item.year}</div>
                 `;
 
@@ -1965,18 +1982,9 @@
         }
 
         // Big 8 Modal Functions
-        function updateBig8Button() {
-            const button = document.getElementById('big8Button');
-            if (state.selectedYear && state.selectedYear !== '') {
-                button.disabled = false;
-            } else {
-                button.disabled = true;
-            }
-        }
-
         function openBig8Modal() {
             if (!state.selectedYear) return;
-            
+
             const yearData = oscarsData[state.selectedYear];
             if (!yearData) {
                 alert('No data available for this year');
@@ -1984,7 +1992,24 @@
             }
 
             populateBig8Modal(state.selectedYear, yearData);
-            
+
+            const modal = document.getElementById('big8Modal');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            if (big8IsPlaying) {
+                resetBig8AutoAdvance();
+            }
+        }
+
+        function openBig8ModalForYear(year) {
+            const yearData = oscarsData[year];
+            if (!yearData) {
+                alert('No data available for this year');
+                return;
+            }
+
+            populateBig8Modal(year, yearData);
+
             const modal = document.getElementById('big8Modal');
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
@@ -2020,7 +2045,6 @@
                 yearSelect.value = year;
             }
             render();
-            updateBig8Button();
         }
 
         function advanceBig8Year() {

@@ -995,13 +995,49 @@ footer p + p {
     box-shadow: 0 12px 22px rgba(13, 19, 33, 0.12);
 }
 
+.category-name-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
 .category-name {
     font-weight: 700;
     color: var(--plum);
     font-size: 0.78em;
     text-transform: uppercase;
     letter-spacing: 0.18em;
-    margin-bottom: 10px;
+}
+
+.big8-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: var(--ink);
+    border-radius: 50%;
+    font-size: 0.65em;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(242, 196, 104, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.big8-badge:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 10px rgba(242, 196, 104, 0.5);
+}
+
+.big8-badge:active {
+    transform: scale(0.95);
 }
 
 .year-display {
