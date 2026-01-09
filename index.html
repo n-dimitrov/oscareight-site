@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://oscareight.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <link rel="stylesheet" href="css/main.css?v=ana26">
+    <link rel="stylesheet" href="css/main.css?v=brad">
 </head>
 <body>
     <div class="backdrop" aria-hidden="true">
@@ -331,7 +331,7 @@
     </div>
 
     <!-- Big 8 Winners Modal -->
-    <div id="big8Modal" class="big8-modal" aria-hidden="true">
+    <div id="big8Modal" class="big8-modal big8-size-medium" aria-hidden="true">
         <button class="modal-close" type="button" aria-label="Close">
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2147,8 +2147,11 @@
 
         function updateBig8FullscreenState() {
             const button = document.getElementById('big8Fullscreen');
-            if (!button) return;
-            if (document.fullscreenElement && document.getElementById('big8Modal')?.contains(document.fullscreenElement)) {
+            const modal = document.getElementById('big8Modal');
+            if (!button || !modal) return;
+            const isFullscreen = Boolean(document.fullscreenElement && modal.contains(document.fullscreenElement));
+            modal.classList.toggle('is-fullscreen', isFullscreen);
+            if (isFullscreen) {
                 button.classList.add('is-active');
             } else {
                 button.classList.remove('is-active');
