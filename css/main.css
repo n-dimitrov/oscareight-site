@@ -2821,6 +2821,31 @@ footer p + p {
     display: none;
     opacity: 0;
     transition: opacity 0.3s ease;
+    --big8-title-size: 0.92rem;
+    --big8-person-size: 0.8rem;
+    --big8-title-size-sm: 0.86rem;
+    --big8-person-size-sm: 0.72rem;
+}
+
+.big8-modal.big8-size-light {
+    --big8-title-size: 0.98rem;
+    --big8-person-size: 0.86rem;
+    --big8-title-size-sm: 0.92rem;
+    --big8-person-size-sm: 0.78rem;
+}
+
+.big8-modal.big8-size-medium {
+    --big8-title-size: 1.02rem;
+    --big8-person-size: 0.9rem;
+    --big8-title-size-sm: 0.95rem;
+    --big8-person-size-sm: 0.8rem;
+}
+
+.big8-modal.big8-size-bold {
+    --big8-title-size: 1.08rem;
+    --big8-person-size: 0.95rem;
+    --big8-title-size-sm: 1rem;
+    --big8-person-size-sm: 0.85rem;
 }
 
 .big8-modal[aria-hidden="false"] {
@@ -2871,6 +2896,19 @@ footer p + p {
     padding: clamp(8px, 2vh, 18px);
 }
 
+.big8-modal:fullscreen .big8-page,
+.big8-modal:-webkit-full-screen .big8-page,
+.big8-modal.is-fullscreen .big8-page {
+    max-width: 1400px;
+    padding: clamp(12px, 2vh, 24px);
+}
+
+.big8-modal:fullscreen .big8-header,
+.big8-modal:-webkit-full-screen .big8-header,
+.big8-modal.is-fullscreen .big8-header {
+    margin-bottom: clamp(10px, 2vh, 24px);
+}
+
 .big8-modal:fullscreen .big8-title,
 .big8-modal:-webkit-full-screen .big8-title,
 .big8-modal.is-fullscreen .big8-title {
@@ -2907,6 +2945,7 @@ footer p + p {
 .big8-modal:-webkit-full-screen .big8-grid,
 .big8-modal.is-fullscreen .big8-grid {
     grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: clamp(12px, 1.8vw, 22px);
 }
 
 .big8-modal:fullscreen .big8-card,
@@ -2914,6 +2953,19 @@ footer p + p {
 .big8-modal.is-fullscreen .big8-card {
     min-height: 0;
     height: 100%;
+    padding: clamp(12px, 1.6vw, 20px);
+}
+
+.big8-modal:fullscreen .big8-card .big8-poster,
+.big8-modal:-webkit-full-screen .big8-card .big8-poster,
+.big8-modal.is-fullscreen .big8-card .big8-poster {
+    width: clamp(84px, 7vw, 120px);
+}
+
+.big8-modal:fullscreen .big8-card--center .big8-poster,
+.big8-modal:-webkit-full-screen .big8-card--center .big8-poster,
+.big8-modal.is-fullscreen .big8-card--center .big8-poster {
+    width: clamp(140px, 12vw, 200px);
 }
 
 @media (max-width: 720px) {
@@ -3234,7 +3286,7 @@ footer p + p {
 
 .big8-movie-title {
     font-family: "Fraunces", "Garamond", "Times New Roman", serif;
-    font-size: 0.92rem;
+    font-size: var(--big8-title-size);
     margin-bottom: 6px;
     color: #fce7ba;
     overflow-wrap: anywhere;
@@ -3243,7 +3295,7 @@ footer p + p {
 }
 
 .big8-person {
-    font-size: 0.8rem;
+    font-size: var(--big8-person-size);
     color: #edd7ae;
     line-height: 1.35;
     overflow-wrap: anywhere;
@@ -3402,12 +3454,12 @@ footer p + p {
     }
 
     .big8-movie-title {
-        font-size: 0.86rem;
+        font-size: var(--big8-title-size-sm);
         margin-bottom: 4px;
     }
 
     .big8-person {
-        font-size: 0.72rem;
+        font-size: var(--big8-person-size-sm);
     }
 }
 
