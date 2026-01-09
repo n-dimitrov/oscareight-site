@@ -2147,8 +2147,11 @@
 
         function updateBig8FullscreenState() {
             const button = document.getElementById('big8Fullscreen');
-            if (!button) return;
-            if (document.fullscreenElement && document.getElementById('big8Modal')?.contains(document.fullscreenElement)) {
+            const modal = document.getElementById('big8Modal');
+            if (!button || !modal) return;
+            const isFullscreen = Boolean(document.fullscreenElement && modal.contains(document.fullscreenElement));
+            modal.classList.toggle('is-fullscreen', isFullscreen);
+            if (isFullscreen) {
                 button.classList.add('is-active');
             } else {
                 button.classList.remove('is-active');
