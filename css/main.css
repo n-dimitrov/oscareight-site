@@ -2879,15 +2879,15 @@ footer p + p {
 .big8-modal:fullscreen .big8-modal-overlay,
 .big8-modal:-webkit-full-screen .big8-modal-overlay,
 .big8-modal.is-fullscreen .big8-modal-overlay {
-    padding: 0;
+    padding: clamp(14px, 3vw, 36px);
 }
 
 .big8-modal:fullscreen .big8-modal-container,
 .big8-modal:-webkit-full-screen .big8-modal-container,
 .big8-modal.is-fullscreen .big8-modal-container {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
+    width: min(1400px, 100vw);
+    height: min(900px, 100vh);
+    border-radius: 22px;
 }
 
 .big8-modal:fullscreen .big8-modal-body,
@@ -2896,56 +2896,42 @@ footer p + p {
     padding: clamp(8px, 2vh, 18px);
 }
 
-.big8-modal:fullscreen .big8-page,
-.big8-modal:-webkit-full-screen .big8-page,
-.big8-modal.is-fullscreen .big8-page {
-    max-width: 1400px;
-    padding: clamp(12px, 2vh, 24px);
-}
-
-.big8-modal:fullscreen .big8-header,
-.big8-modal:-webkit-full-screen .big8-header,
-.big8-modal.is-fullscreen .big8-header {
-    margin-bottom: clamp(10px, 2vh, 24px);
-}
-
 .big8-modal:fullscreen .big8-title,
 .big8-modal:-webkit-full-screen .big8-title,
 .big8-modal.is-fullscreen .big8-title {
-    font-size: clamp(2rem, 3vw, 2.8rem);
+    font-size: clamp(1.8rem, 2.6vw, 2.4rem);
     letter-spacing: 0.08em;
 }
 
 .big8-modal:fullscreen .big8-year,
 .big8-modal:-webkit-full-screen .big8-year,
 .big8-modal.is-fullscreen .big8-year {
-    font-size: clamp(2.2rem, 4vw, 3.6rem);
+    font-size: clamp(2rem, 3.2vw, 3rem);
     letter-spacing: 0.14em;
 }
 
 .big8-modal:fullscreen .big8-card .big8-label,
 .big8-modal:-webkit-full-screen .big8-card .big8-label,
 .big8-modal.is-fullscreen .big8-card .big8-label {
-    font-size: clamp(0.75rem, 1vw, 0.95rem);
+    font-size: clamp(0.7rem, 0.9vw, 0.85rem);
 }
 
 .big8-modal:fullscreen .big8-movie-title,
 .big8-modal:-webkit-full-screen .big8-movie-title,
 .big8-modal.is-fullscreen .big8-movie-title {
-    font-size: clamp(1rem, 1.2vw, 1.2rem);
+    font-size: clamp(0.95rem, 1.1vw, 1.1rem);
 }
 
 .big8-modal:fullscreen .big8-person,
 .big8-modal:-webkit-full-screen .big8-person,
 .big8-modal.is-fullscreen .big8-person {
-    font-size: clamp(0.9rem, 1vw, 1.05rem);
+    font-size: clamp(0.82rem, 0.95vw, 0.98rem);
 }
 
 .big8-modal:fullscreen .big8-grid,
 .big8-modal:-webkit-full-screen .big8-grid,
 .big8-modal.is-fullscreen .big8-grid {
     grid-template-rows: repeat(3, minmax(0, 1fr));
-    gap: clamp(12px, 1.8vw, 22px);
 }
 
 .big8-modal:fullscreen .big8-card,
@@ -2953,19 +2939,6 @@ footer p + p {
 .big8-modal.is-fullscreen .big8-card {
     min-height: 0;
     height: 100%;
-    padding: clamp(12px, 1.6vw, 20px);
-}
-
-.big8-modal:fullscreen .big8-card .big8-poster,
-.big8-modal:-webkit-full-screen .big8-card .big8-poster,
-.big8-modal.is-fullscreen .big8-card .big8-poster {
-    width: clamp(84px, 7vw, 120px);
-}
-
-.big8-modal:fullscreen .big8-card--center .big8-poster,
-.big8-modal:-webkit-full-screen .big8-card--center .big8-poster,
-.big8-modal.is-fullscreen .big8-card--center .big8-poster {
-    width: clamp(140px, 12vw, 200px);
 }
 
 @media (max-width: 720px) {
