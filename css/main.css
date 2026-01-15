@@ -561,6 +561,13 @@ header p {
     justify-items: center;
 }
 
+.poster-strip-info-awards-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 .poster-strip-info-title {
     font-weight: 600;
     font-size: 1em;
@@ -570,6 +577,10 @@ header p {
     padding: 0;
     font-family: inherit;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+    min-height: 1.2em;
     transition: opacity 0.2s ease, transform 0.1s ease;
 }
 
@@ -586,6 +597,8 @@ header p {
     margin-left: 6px;
     color: var(--ink-soft);
     font-size: 0.95em;
+    line-height: 1;
+    display: inline-block;
 }
 
 .poster-strip-info-star.is-winner {
@@ -598,6 +611,7 @@ header p {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);
+    line-height: 1.2;
 }
 
 .poster-strip-info-awards {
@@ -609,6 +623,27 @@ header p {
     padding: 4px 10px;
     border-radius: 999px;
     background: rgba(13, 19, 33, 0.08);
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    min-height: 1.6em;
+}
+
+.awards-count {
+}
+
+.awards-count--winner {
+    color: var(--gold-deep);
+}
+
+.awards-count-number {
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.awards-count-x {
+    font-size: 0.8em;
+    margin-left: 1px;
 }
 
 .poster-strip-info-awards.is-winner {
@@ -1478,6 +1513,10 @@ footer p + p {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.78);
+}
+
+.wall-poster-tooltip-awards .awards-count--winner {
+    color: var(--gold);
 }
 
 .wall-tooltip-star {

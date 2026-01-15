@@ -1364,7 +1364,9 @@
             if (!tooltip || !modalContent || !wrap) return;
             const title = wrap.dataset.title || '';
             const year = wrap.dataset.year || '';
-            const awards = wrap.dataset.awards || '';
+            const movieId = wrap.dataset.movieId;
+            const info = movieId ? getPosterAwardsInfo(movieId) : null;
+            const awards = info ? info.awardsHtml : (wrap.dataset.awards || '');
             const star = wrap.dataset.star === 'true' ? '<span class="wall-tooltip-star">&#9733;</span>' : '';
             tooltip.innerHTML = `
                 <div class="wall-poster-tooltip-title">${title}${star}</div>
@@ -1586,30 +1588,47 @@
             const wins = entry.wins || 0;
             const nominations = entry.nominations || 0;
             let awardsLine = '';
+            let awardsHtml = '';
             let winnerLine = '';
+            let winnerLineHtml = '';
             let nominatedLine = '';
+            let nominatedLineHtml = '';
             if (wins === 1) {
                 winnerLine = 'Oscar Winner';
+                winnerLineHtml = 'Oscar Winner';
             } else if (wins > 1) {
-                winnerLine = `Oscar Winner ${wins}X`;
+                winnerLine = `Oscar ${wins}x Winner`;
+                winnerLineHtml = `Oscar&nbsp;<span class="awards-count awards-count--winner"><span class="awards-count-number">${wins}</span><span class="awards-count-x">x</span></span>&nbsp;Winner`;
             }
             if (nominations === 1) {
-                nominatedLine = 'Nominated';
+                nominatedLine = 'Nominee';
+                nominatedLineHtml = 'Nominee';
             } else if (nominations > 1) {
-                nominatedLine = `Nominated ${nominations}X`;
+                nominatedLine = `${nominations}x Nominee`;
+                nominatedLineHtml = `<span class="awards-count awards-count--nominee"><span class="awards-count-number">${nominations}</span><span class="awards-count-x">x</span></span>&nbsp;Nominee`;
+            } else {
+                nominatedLineHtml = '';
             }
             if (winnerLine && nominations === wins) {
                 nominatedLine = '';
+                nominatedLineHtml = '';
             }
             if (winnerLine && nominatedLine) {
-                awardsLine = `${winnerLine} / ${nominatedLine}`;
+                awardsLine = `${winnerLine}  ${nominatedLine}`;
+                awardsHtml = `${winnerLineHtml}&nbsp;&nbsp;${nominatedLineHtml}`;
             } else {
                 awardsLine = winnerLine || nominatedLine;
+                awardsHtml = winnerLineHtml || nominatedLineHtml;
             }
             return {
                 title,
                 year,
                 awardsLine,
+                awardsHtml,
+                winnerLine,
+                winnerLineHtml,
+                nominatedLine,
+                nominatedLineHtml,
                 isWinner: wins > 0,
                 isBestPictureNominee,
                 isBestPictureWinner
@@ -1627,11 +1646,19 @@
             const titleClass = posterInfo.isWinner ? 'poster-strip-info-title is-winner' : 'poster-strip-info-title';
             const starClass = posterInfo.isBestPictureWinner ? 'poster-strip-info-star is-winner' : 'poster-strip-info-star';
             const star = posterInfo.isBestPictureNominee ? `<span class="${starClass}">&#9733;</span>` : '';
-            const awardsClass = posterInfo.isWinner ? 'poster-strip-info-awards is-winner' : 'poster-strip-info-awards';
+            const winnerPill = posterInfo.winnerLineHtml
+                ? `<div class="poster-strip-info-awards is-winner">${posterInfo.winnerLineHtml}</div>`
+                : '';
+            const nomineePill = posterInfo.nominatedLineHtml
+                ? `<div class="poster-strip-info-awards">${posterInfo.nominatedLineHtml}</div>`
+                : '';
+            const awardsBlock = winnerPill || nomineePill
+                ? `<div class="poster-strip-info-awards-group">${winnerPill}${nomineePill}</div>`
+                : '';
             info.innerHTML = `
                 <button class="${titleClass}" type="button" data-movie-id="${movieId}">${posterInfo.title}${star}</button>
                 <div class="poster-strip-info-year">${posterInfo.year}</div>
-                <div class="${awardsClass}">${posterInfo.awardsLine}</div>
+                ${awardsBlock}
             `.trim();
         }
 
