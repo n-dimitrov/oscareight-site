@@ -3047,6 +3047,12 @@ footer p + p {
     }
 }
 
+@media (max-width: 720px) {
+    .big8-modal .big8-controls {
+        display: none;
+    }
+}
+
 .big8-modal-body::before {
     content: "";
     position: absolute;
@@ -3493,5 +3499,20 @@ footer p + p {
 
     .big8-card .big8-poster {
         width: clamp(68px, 28vw, 88px);
+    }
+
+    .big8-card--center {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+    }
+
+    .big8-card--center .big8-poster {
+        width: clamp(100px, 42vw, 140px);
+    }
+
+    .big8-card--center .big8-details {
+        align-items: center;
+        text-align: center;
     }
 }
