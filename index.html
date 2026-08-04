@@ -227,6 +227,10 @@
                 </div>
                 <div id="badgeFilterCount" class="badge-filter-count"></div>
             </div>
+            <div id="badgeWatchNext" class="badge-watch-next" style="display: none;" aria-label="Watch next recommendations">
+                <div class="badge-watch-next-label">Watch next</div>
+                <div id="badgeWatchNextList" class="badge-watch-next-list"></div>
+            </div>
             <div class="modal-body badge-body">
                 <div id="badgesGrid" class="badge-grid"></div>
             </div>
@@ -2648,6 +2652,8 @@
   const badgeTypeFilter = document.getElementById('badgeTypeFilter');
   const badgeVariantFilter = document.getElementById('badgeVariantFilter');
   const badgeFilterCount = document.getElementById('badgeFilterCount');
+  const badgeWatchNext = document.getElementById('badgeWatchNext');
+  const badgeWatchNextList = document.getElementById('badgeWatchNextList');
   const badgeSupport = document.getElementById('badgeSupport');
   const badgeDetailModal = document.getElementById('badgeDetailModal');
   const badgeDetailClose = document.getElementById('badgeDetailClose');
@@ -3421,19 +3427,109 @@
   }
 
   function getBadgeProgress(badge) {
-    const ids = getBadgeTargetIds(badge);
+    const ids = Array.from(new Set(getBadgeTargetIds(badge)));
     let watchedCount = 0;
+    const missingIds = [];
     ids.forEach((id) => {
       if (watchedIds.has(id)) {
         watchedCount += 1;
+      } else if (missingIds.length < 2) {
+        missingIds.push(id);
       }
     });
     const totalCount = ids.length;
     return {
       watchedCount,
       totalCount,
-      isComplete: totalCount > 0 && watchedCount === totalCount
+      isComplete: totalCount > 0 && watchedCount === totalCount,
+      lastMissingId: totalCount - watchedCount === 1 ? missingIds[0] : null
     };
+  }
+
+  function renderWatchNext(progressMap) {
+    if (!badgeWatchNext || !badgeWatchNextList) return;
+
+    // Group one-away badges by their single missing movie: each of these
+    // movies closes every badge it is grouped under, on its own.
+    // Only badges matching the active type/variant filters count.
+    const closersByMovie = new Map();
+    badgeDefinitions.forEach((badge) => {
+      if (badgeFilters.type !== 'all' && badge.type !== badgeFilters.type) return;
+      if (badgeFilters.variant === 'winners' && badge.includeNominees) return;
+      if (badgeFilters.variant === 'all-nominees' && !badge.includeNominees) return;
+      const progress = progressMap.get(badge.id);
+      if (!progress || !progress.lastMissingId) return;
+      const list = closersByMovie.get(progress.lastMissingId) || [];
+      list.push(badge);
+      closersByMovie.set(progress.lastMissingId, list);
+    });
+
+    const ranked = Array.from(closersByMovie.entries()).map(([id, badges]) => {
+      const movie = moviesData[id] || {};
+      return {
+        id,
+        badges,
+        closes: badges.length,
+        winnersCloses: badges.filter((badge) => badge.includeNominees === false).length,
+        title: movie.title || 'Unknown',
+        year: Number(movie.year) || 0,
+        posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : ''
+      };
+    }).sort((a, b) =>
+      b.closes - a.closes ||
+      b.winnersCloses - a.winnersCloses ||
+      b.year - a.year ||
+      a.title.localeCompare(b.title)
+    ).slice(0, 5);
+
+    if (ranked.length === 0) {
+      badgeWatchNext.style.display = 'none';
+      badgeWatchNextList.innerHTML = '';
+      return;
+    }
+
+    badgeWatchNextList.innerHTML = '';
+    ranked.forEach((entry) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'badge-watch-next-card';
+      card.title = entry.badges
+        .map((badge) => `${badge.title} · ${badge.subtitle || ''} · ${badge.periodLabel || ''}`)
+        .join('\n');
+
+      const poster = document.createElement('div');
+      poster.className = 'badge-watch-next-poster';
+      if (entry.posterUrl) {
+        const img = document.createElement('img');
+        img.src = entry.posterUrl;
+        img.alt = '';
+        img.loading = 'lazy';
+        poster.appendChild(img);
+      }
+      card.appendChild(poster);
+
+      const info = document.createElement('div');
+      info.className = 'badge-watch-next-info';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'badge-watch-next-title';
+      titleEl.textContent = entry.year ? `${entry.title} (${entry.year})` : entry.title;
+      info.appendChild(titleEl);
+
+      const reasonEl = document.createElement('div');
+      reasonEl.className = 'badge-watch-next-reason';
+      reasonEl.textContent = entry.closes === 1 ? 'Closes 1 badge' : `Closes ${entry.closes} badges`;
+      info.appendChild(reasonEl);
+
+      card.appendChild(info);
+      card.addEventListener('click', () => {
+        if (window.openMovieDetail) {
+          window.openMovieDetail(entry.id);
+        }
+      });
+      badgeWatchNextList.appendChild(card);
+    });
+    badgeWatchNext.style.display = 'flex';
   }
 
   function renderBadges() {
@@ -3449,6 +3545,9 @@
       if (badgeSupport) {
         badgeSupport.style.display = 'none';
       }
+      if (badgeWatchNext) {
+        badgeWatchNext.style.display = 'none';
+      }
       previousEarnedBadgeIds = new Set();
       return;
     }
@@ -3462,6 +3561,8 @@
         earnedNow.add(badge.id);
       }
     });
+    renderWatchNext(progressMap);
+
     if (badgeSupport) {
       badgeSupport.style.display = earnedNow.size >= 3 ? 'flex' : 'none';
       const supportButton = badgeSupport.querySelector('.bmc-button');
